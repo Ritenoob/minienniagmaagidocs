@@ -115,10 +115,26 @@ class VolumeAnalyzer {
     const isBreakout = relativeVolume >= this.breakoutMultiplier;
     
     // Volume momentum (recent vs older)
-    const recentAvg = volumes.slice(-5).reduce((a, b) => a + b, 0) / Math.min(5, volumes.length);
-    const olderAvg = volumes.slice(-20, -5).length > 0
-      ? volumes.slice(-20, -5).reduce((a, b) => a + b, 0) / volumes.slice(-20, -5).length
-      : recentAvg;
+    const recentWindow = 5;
+    const olderWindow = 20;
+
+    // Recent average over the last up to 5 volumes
+    const recentSlice = volumes.slice(-recentWindow);
+    const recentAvg = recentSlice.reduce((a, b) => a + b, 0) / Math.min(recentWindow, volumes.length);
+
+    // Older average: window before the recent window (up to 20 bars back).
+    // If there are not enough older bars, fall back to recentAvg so momentum = 1.
+    let olderAvg;
+    if (volumes.length > recentWindow) {
+      const start = Math.max(0, volumes.length - olderWindow);
+      const end = volumes.length - recentWindow;
+      const olderSlice = volumes.slice(start, end);
+      olderAvg = olderSlice.length > 0
+        ? olderSlice.reduce((a, b) => a + b, 0) / olderSlice.length
+        : recentAvg;
+    } else {
+      olderAvg = recentAvg;
+    }
     const momentum = olderAvg > 0 ? recentAvg / olderAvg : 1;
     
     this.volumeStats.set(symbol, {
