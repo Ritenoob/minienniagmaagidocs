@@ -124,7 +124,13 @@ class CoinRankerV2 {
               imbalanceScore: 0,
               compositeScore: 0
             };
-          } catch {
+          } catch (err) {
+            console.warn(
+              '[CoinRankerV2] Failed to fetch ticker for contract:',
+              contract && contract.symbol,
+              '-',
+              err && err.message ? err.message : err
+            );
             return null;
           }
         })
