@@ -1,0 +1,339 @@
+The Definitive Information Model for a Trading Bot
+(What the system must know, not what it must do)
+
+A trading bot is a decision system under uncertainty.
+Every failure comes from missing, stale, or mis-owned information.
+
+LAYER 0 — Reality (The External World)
+
+This layer is never negotiable. It is the ground truth.
+
+0.1 Market Reality
+
+Trades (ticks)
+
+Order book (L1/L2/DOM)
+
+OHLCV (all timeframes)
+
+Mark / Index / Settlement prices
+
+Failure if wrong:
+You are trading a fictional market.
+
+0.2 Exchange Reality
+
+Symbol specs (tick size, lot size)
+
+Leverage rules
+
+Margin model
+
+Fee model
+
+Rate limits
+
+Trading halts
+
+Failure if wrong:
+Orders reject, fills differ, or positions liquidate unexpectedly.
+
+LAYER 1 — Interpretation (What the Market Means)
+
+This is where raw data becomes signal.
+
+1.1 Structural Features
+
+Trend
+
+Momentum
+
+Volatility
+
+Range vs expansion
+
+Liquidity state
+
+(Indicators live here.)
+
+1.2 Microstructure Features
+
+Bid/ask imbalance
+
+Flow aggression
+
+Spread dynamics
+
+Funding pressure
+
+Basis distortion
+
+Key rule:
+
+Indicators explain where price has been.
+Microstructure explains how price is moving now.
+
+Failure if missing:
+Bot trades breakouts that never fill or reversals that never revert.
+
+LAYER 2 — Context (When Signals Matter)
+
+Signals without context are noise.
+
+2.1 Time Context
+
+Higher timeframe bias
+
+Lower timeframe entry timing
+
+Alignment / conflict states
+
+2.2 Regime Context
+
+Trending vs ranging
+
+Volatility expansion vs compression
+
+Crowded vs uncrowded
+
+2.3 Market Viability
+
+Liquidity sufficiency
+
+Spread acceptability
+
+Funding sanity
+
+Failure if missing:
+Good signals fired at the worst possible moment.
+
+LAYER 3 — Belief (What the Bot Thinks Is True)
+
+This is the “strategy brain”.
+
+3.1 Signal Construction
+
+Feature aggregation
+
+Weighting
+
+Scoring
+
+Direction encoding
+
+Confidence estimation
+
+3.2 Signal Validity
+
+Freshness
+
+Invalidation rules
+
+Dependency checks
+
+Conflicting evidence
+
+3.3 Explainability
+
+Feature contributions
+
+Why long / why short
+
+Why not traded
+
+Failure if weak:
+You cannot debug, trust, or improve the system.
+
+LAYER 4 — Intent (What the Bot Wants to Do)
+
+This layer contains no execution. Only intent.
+
+4.1 Trade Intent
+
+Side
+
+Entry logic
+
+Exit logic
+
+Stop logic
+
+Invalidation conditions
+
+4.2 Constraints
+
+Max risk
+
+Timing windows
+
+Required confirmations
+
+Key rule:
+
+Intent must be valid without knowing account state.
+
+LAYER 5 — Risk Reality (What the Bot Is Allowed to Do)
+
+This layer can veto everything above it.
+
+5.1 Account Risk
+
+Equity
+
+Margin usage
+
+Exposure
+
+Daily loss
+
+5.2 Trade Risk
+
+Position size
+
+Stop distance
+
+Risk per trade
+
+Correlation with existing positions
+
+5.3 Market Risk
+
+Spread spikes
+
+Volatility shocks
+
+Funding extremes
+
+Liquidity collapse
+
+Failure if weak:
+One trade can destroy months of edge.
+
+LAYER 6 — Execution Reality (What Actually Happens)
+
+This layer is always the final authority.
+
+6.1 Order Lifecycle
+
+Submission
+
+Partial fills
+
+Amendments
+
+Cancels
+
+Rejections
+
+6.2 Fill Quality
+
+Slippage
+
+Latency
+
+Fees
+
+Queue position
+
+Key rule:
+
+Execution truth overrides signal belief.
+
+LAYER 7 — Position Truth (What You Actually Hold)
+
+Net exposure
+
+Average entry
+
+Unrealized PnL
+
+Realized PnL
+
+Liquidation price
+
+Funding paid/received
+
+Failure if wrong:
+Bot believes it’s flat while it’s bleeding.
+
+LAYER 8 — Memory (What the Bot Remembers)
+
+This is how systems evolve instead of repeating mistakes.
+
+8.1 Trade History
+
+Entry/exit
+
+Duration
+
+Exit reason
+
+Market state at entry
+
+8.2 Performance Metrics
+
+Expectancy
+
+Drawdown
+
+Regime performance
+
+Symbol performance
+
+8.3 Research Feedback
+
+Signal quality vs execution quality
+
+False positives
+
+Missed opportunities
+
+LAYER 9 — Health & Survival (Is the System Alive?)
+
+WebSocket lag
+
+Data gaps
+
+Reconnect count
+
+Clock drift
+
+Rate-limit pressure
+
+Failure if ignored:
+Bot dies silently.
+
+LAYER 10 — Control & Governance (Who Is in Charge)
+10.1 Human Overrides
+
+Pause
+
+Resume
+
+Cancel all
+
+Flatten
+
+10.2 Permissions
+
+Who can trade
+
+Who can change configs
+
+Who can deploy
+
+10.3 Safety Systems
+
+Kill switch
+
+Circuit breakers
+
+Emergency shutdown
+
+The Elite Mental Model (Remember This)
+
+Markets generate data.
+Signals generate beliefs.
+Risk grants permission.
+Execution determines truth.
+Memory creates edge.

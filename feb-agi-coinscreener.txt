@@ -1,0 +1,444 @@
+AGI-LEVEL TRADING BOT
+COMPLETE RECONSTRUCTION PROTOCOL v5.0 (UNCOMPRESSED)
+
+Target: KuCoin Futures – Perpetual Contracts
+Operating Mode: Live + Paper + Backtest
+Signal Philosophy: Rare, high-conviction, multi-indicator + microstructure alignment
+Execution Philosophy: Deterministic, auditable, risk-gated
+
+0. Executive Summary (What This System Actually Is)
+
+This system is a two-layer trading intelligence stack:
+
+Signal Intelligence Layer
+
+Consumes OHLCV + live order-book/funding data
+
+Computes 10 enhanced technical indicators
+
+Computes 3 live-only market microstructure analyzers
+
+Aligns signals across timeframes
+
+Scores, ranks, and emits trade opportunities
+
+Execution & Optimization Layer
+
+Uses signals for:
+
+Paper trading
+
+Backtesting
+
+Walk-forward optimization
+
+(Later) live execution
+
+Feeds performance back into tuning systems
+
+The system is not a strategy, it is a signal factory with strict scoring, gating, and explainability.
+
+1. System Architecture (Expanded)
+1.1 Top-Level Runtime Model
+KuCoin WebSockets + REST
+        ↓
+WebSocketManager (token-managed, auto-reconnect)
+        ↓
+ScreenerEngine (multi-symbol, multi-timeframe)
+        ↓
+Indicator Engines (10 total)
+        ↓
+Microstructure Engines (3 total, live-only)
+        ↓
+TimeframeAligner
+        ↓
+SignalGenerator / SignalGeneratorV2
+        ↓
+CoinRanker / CoinRankerV2
+        ↓
+Signal Output Stream
+        ↓
+Paper Trader / Backtest / Optimizer / Dashboard
+
+2. Enhanced Signal Detection System (What “Enhanced” Means)
+
+“Enhanced” does NOT mean default indicator values.
+
+Each indicator:
+
+Is stateful
+
+Is incremental (O(1) updates)
+
+Produces multiple signal types, not a single boolean
+
+Emits directional strength, not just direction
+
+Supports divergence detection
+
+Is aware of market regime (trend vs range)
+
+Each indicator contributes positive or negative points.
+
+3. ALL Enhanced Indicator Implementations (Uncompressed)
+
+Below is what each indicator actually contributes.
+
+3.1 RSI (Max ±25)
+
+Signal Types
+
+Bullish / Bearish crossover
+
+Hidden & regular divergence
+
+Momentum acceleration
+
+Oversold / overbought zone behavior
+
+Scoring Logic
+
+Strong divergence = high weight
+
+Weak momentum = low weight
+
+Flat RSI = near zero contribution
+
+3.2 Williams %R (Max ±20)
+
+Signal Types
+
+-80 → -20 zone transitions
+
+Failure swings
+
+Divergence
+
+Extreme exhaustion
+
+Important
+
+Primary trigger in your system
+
+Entry timing anchor
+
+3.3 MACD (Max ±20)
+
+Signal Types
+
+Signal line cross
+
+Zero-line cross
+
+Histogram expansion/contraction
+
+Divergence
+
+3.4 Awesome Oscillator (Max ±15)
+
+Signal Types
+
+Zero-line cross
+
+Saucer pattern
+
+Twin peaks
+
+Momentum divergence
+
+3.5 EMA Trend (Max ±20)
+
+Signal Types
+
+Fast/slow cross
+
+Golden / death cross
+
+Slope direction
+
+Price distance from EMA (overextension)
+
+3.6 Stochastic (Max ±10)
+
+Signal Types
+
+%K / %D cross
+
+Oversold / overbought
+
+Divergence
+
+3.7 Bollinger Bands (Max ±10)
+
+Signal Types
+
+Band touch (mean reversion)
+
+Squeeze (volatility compression)
+
+Expansion breakout
+
+3.8 KDJ (Max ±15) — NEW
+
+Signal Types
+
+J-line extremes
+
+K/D cross
+
+Divergence
+
+Momentum burst detection
+
+3.9 OBV (Max ±10) — NEW
+
+Signal Types
+
+Slope change
+
+Volume breakout
+
+Price/volume divergence
+
+3.10 DOM Analyzer (Max ±15) — LIVE ONLY
+
+Signal Types
+
+Bid/ask imbalance
+
+Liquidity walls
+
+Microprice skew
+
+Absorption detection
+
+Important
+
+Never used in backtest
+
+Reduced weight influence
+
+4. Market Microstructure Analyzers (Expanded)
+
+These do not replace indicators.
+They confirm or veto marginal signals.
+
+4.1 Buy : Sell Ratio Analyzer (Max ±15)
+
+Inputs
+
+Aggressive buys vs sells
+
+Trade velocity
+
+Absorption patterns
+
+Signals
+
+Flow imbalance
+
+Exhaustion
+
+Hidden absorption
+
+4.2 Price Ratio Analyzer (Max ±15)
+
+Inputs
+
+Bid vs ask
+
+Mark vs index
+
+Futures basis
+
+Signals
+
+Premium / discount
+
+Spread compression
+
+Convergence / divergence
+
+4.3 Funding Rate Analyzer (Max ±15)
+
+Inputs
+
+Current funding
+
+Rate of change
+
+Historical extremes
+
+Signals
+
+Crowded positioning
+
+Mean reversion setup
+
+Predicted funding flip
+
+5. Signal Score Calculation (Fully Explained)
+5.1 Raw Score
+RAW_SCORE = SUM(Indicator Contributions)
+          + SUM(Microstructure Contributions)
+
+
+Indicators: up to ±160 theoretical
+
+Microstructure: up to ±45 theoretical
+
+5.2 Safety Clamps
+INDICATOR_SCORE capped at ±110
+MICROSTRUCTURE_SCORE capped at ±20
+FINAL_SCORE capped at ±130
+
+
+Why
+
+Prevent single-source dominance
+
+Keep live-only data from overpowering backtestable logic
+
+5.3 Direction Encoding
+
+FINAL_SCORE > +X → Long bias
+
+FINAL_SCORE < -X → Short bias
+
+Inside threshold → No trade
+
+6. Fixed Screener Engine (What Was Broken & Now Fixed)
+
+Responsibilities
+
+WebSocket token refresh
+
+Auto-reconnect
+
+Per-symbol subscription management
+
+Throttling protection
+
+Guarantees
+
+No silent disconnects
+
+No stale candles
+
+Deterministic event ordering
+
+7. Dynamic Coin Screener (Expanded)
+CoinRanker / CoinRankerV2
+
+Inputs
+
+Volume
+
+Volatility (ATR)
+
+Liquidity
+
+Spread
+
+Microstructure health (V2)
+
+Outputs
+
+Ranked universe
+
+Excluded symbols (bad liquidity, insane funding, etc.)
+
+8. Parallel Auto Paper Trading Optimizer
+PaperTradingEngineV2
+
+Features
+
+Runs in parallel across symbols
+
+Consumes real Signal objects
+
+Simulates fills with spread & slippage
+
+Logs full lifecycle
+
+9. Indicator Enhancement System
+IndicatorEnhancer
+
+Purpose
+
+Auto-tune parameters
+
+Track degradation
+
+Suggest new configs
+
+Feeds
+
+StrategyOptimizer
+
+WalkForwardValidator
+
+10. SignalGenerator v2 (Integrated Brain)
+
+Inputs
+
+All indicators
+
+All microstructure analyzers
+
+TimeframeAligner
+
+ConfigSchema
+
+Outputs
+
+Explainable signal object
+
+Feature breakdown
+
+Confidence score
+
+11. Position & Risk Management (Signal-Side Only)
+
+Signal Layer Handles
+
+Entry intent
+
+Stop/TP proposal
+
+Invalidation rules
+
+Never
+
+Position sizing
+
+Leverage decisions
+
+Order placement
+
+12. Dashboard Integration (Signal View)
+
+Dashboard Shows
+
+Signal score composition
+
+Indicator contributions
+
+Microstructure state
+
+Coin rankings
+
+Paper trade results
+
+13. Testing & Deployment
+Tests
+
+Unit: indicator math
+
+Integration: signal flow
+
+Property: invariants (no NaNs, bounded scores)
+
+Final One-Line Summary
+
+This system is a multi-indicator, multi-timeframe, microstructure-aware signal engine that produces rare, explainable, high-conviction trade opportunities, optimized and validated through parallel paper trading and walk-forward analysis — not a naive execution bot.

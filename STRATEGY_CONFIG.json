@@ -1,0 +1,416 @@
+{
+  "metadata": {
+    "system": "Miniature Enigma",
+    "version": "5.2.6",
+    "platform": "KuCoin Futures",
+    "generated": "2026-01-27",
+    "purpose": "Complete strategy specification for AI implementation"
+  },
+  
+  "scoring": {
+    "range": { "min": -220, "max": 220 },
+    "caps": {
+      "indicator": 200,
+      "microstructure": 20,
+      "total": 220
+    },
+    "classifications": [
+      { "name": "EXTREME_BUY", "min": 130, "max": 220, "action": "STRONG_LONG" },
+      { "name": "STRONG_BUY", "min": 95, "max": 129, "action": "LONG" },
+      { "name": "BUY", "min": 65, "max": 94, "action": "MODERATE_LONG" },
+      { "name": "BUY_WEAK", "min": 40, "max": 64, "action": "WEAK_LONG" },
+      { "name": "NEUTRAL", "min": -39, "max": 39, "action": "NO_ACTION" },
+      { "name": "SELL_WEAK", "min": -64, "max": -40, "action": "WEAK_SHORT" },
+      { "name": "SELL", "min": -94, "max": -65, "action": "MODERATE_SHORT" },
+      { "name": "STRONG_SELL", "min": -129, "max": -95, "action": "SHORT" },
+      { "name": "EXTREME_SELL", "min": -220, "max": -130, "action": "STRONG_SHORT" }
+    ]
+  },
+  
+  "timeframes": {
+    "primary": "30min",
+    "secondary": "2hour",
+    "available": ["5min", "15min", "30min", "1hour", "2hour", "4hour"],
+    "alignment": {
+      "min": 2,
+      "max": 4,
+      "blockFull": true
+    }
+  },
+  
+  "indicators": {
+    "RSI": {
+      "weight": 17,
+      "maxScore": 34,
+      "formula": "RSI = 100 - (100 / (1 + RS)), RS = AvgGain / AvgLoss",
+      "parameters": {
+        "5min":  { "period": 7,  "oversold": 25, "overbought": 70 },
+        "15min": { "period": 21, "oversold": 30, "overbought": 70 },
+        "30min": { "period": 14, "oversold": 30, "overbought": 75 },
+        "1hour": { "period": 21, "oversold": 30, "overbought": 70 },
+        "2hour": { "period": 14, "oversold": 30, "overbought": 70 },
+        "4hour": { "period": 14, "oversold": 30, "overbought": 70 }
+      },
+      "signals": {
+        "bullish": "rsi <= oversold → +17 to +34",
+        "bearish": "rsi >= overbought → -17 to -34",
+        "neutral": "oversold < rsi < overbought → 0"
+      }
+    },
+    
+    "STOCHRSI": {
+      "weight": 20,
+      "maxScore": 40,
+      "formula": "StochRSI = (RSI - LowestRSI) / (HighestRSI - LowestRSI) × 100, K = SMA(StochRSI, kPeriod), D = SMA(K, dPeriod)",
+      "parameters": {
+        "5min":  { "rsiPeriod": 7,  "stochPeriod": 9,  "kPeriod": 3, "dPeriod": 4, "oversold": 20, "overbought": 80 },
+        "15min": { "rsiPeriod": 50, "stochPeriod": 21, "kPeriod": 3, "dPeriod": 3, "oversold": 20, "overbought": 80 },
+        "30min": { "rsiPeriod": 21, "stochPeriod": 14, "kPeriod": 3, "dPeriod": 3, "oversold": 20, "overbought": 80 },
+        "1hour": { "rsiPeriod": 21, "stochPeriod": 9,  "kPeriod": 3, "dPeriod": 3, "oversold": 20, "overbought": 80 },
+        "2hour": { "rsiPeriod": 14, "stochPeriod": 14, "kPeriod": 3, "dPeriod": 3, "oversold": 20, "overbought": 80 },
+        "4hour": { "rsiPeriod": 14, "stochPeriod": 14, "kPeriod": 3, "dPeriod": 3, "oversold": 20, "overbought": 80 }
+      },
+      "signals": {
+        "bullishCrossover": "K crosses above D in oversold zone → +20",
+        "bearishCrossover": "K crosses below D in overbought zone → -20",
+        "bullish": "K < oversold → +10",
+        "bearish": "K > overbought → -10"
+      }
+    },
+    
+    "MACD": {
+      "weight": 18,
+      "maxScore": 36,
+      "formula": "MACD = EMA(close, 12) - EMA(close, 26), Signal = EMA(MACD, 9), Histogram = MACD - Signal",
+      "parameters": {
+        "fastPeriod": 12,
+        "slowPeriod": 26,
+        "signalPeriod": 9
+      },
+      "signals": {
+        "bullishAccelerating": "MACD > Signal AND histogram > 0 AND rising → +18",
+        "bullishDecelerating": "MACD > Signal AND histogram > 0 AND falling → +12",
+        "bullishCrossover": "MACD crosses above Signal → +15",
+        "bearishAccelerating": "MACD < Signal AND histogram < 0 AND falling → -18",
+        "bearishDecelerating": "MACD < Signal AND histogram < 0 AND rising → -12",
+        "bearishCrossover": "MACD crosses below Signal → -15"
+      }
+    },
+    
+    "BOLLINGER": {
+      "weight": 20,
+      "maxScore": 40,
+      "formula": "Middle = SMA(close, 20), Upper = Middle + 2×stdDev, Lower = Middle - 2×stdDev",
+      "parameters": {
+        "period": 20,
+        "multiplier": 2.0
+      },
+      "signals": {
+        "bullishReversal": "close < lower → +10",
+        "bullishBounce": "close < lower AND close > prevClose → +20",
+        "bearishReversal": "close > upper → -10",
+        "bearishRejection": "close > upper AND close < prevClose → -20",
+        "walkingUpper": "close > middle AND percentB > 0.8 → +5",
+        "walkingLower": "close < middle AND percentB < 0.2 → -5"
+      }
+    },
+    
+    "WILLIAMS_R": {
+      "weight": 20,
+      "maxScore": 50,
+      "winRate": "87.5%",
+      "formula": "%R = (HighestHigh - Close) / (HighestHigh - LowestLow) × -100",
+      "parameters": {
+        "5min":  { "period": 7,  "oversold": -75, "overbought": -20 },
+        "15min": { "period": 21, "oversold": -85, "overbought": -15 },
+        "30min": { "period": 14, "oversold": -80, "overbought": -20 },
+        "1hour": { "period": 14, "oversold": -80, "overbought": -20 },
+        "2hour": { "period": 14, "oversold": -80, "overbought": -20 },
+        "4hour": { "period": 14, "oversold": -80, "overbought": -20 }
+      },
+      "signals": {
+        "bullish": "%R <= oversold → +20",
+        "bullishTurning": "%R <= oversold AND %R > prev%R → +25",
+        "bearish": "%R >= overbought → -20",
+        "bearishTurning": "%R >= overbought AND %R < prev%R → -25"
+      }
+    },
+    
+    "STOCHASTIC": {
+      "weight": 18,
+      "maxScore": 36,
+      "winRate": "85.7%",
+      "formula": "%K = (Close - LowestLow) / (HighestHigh - LowestLow) × 100, %D = SMA(%K, 3)",
+      "parameters": {
+        "kPeriod": 14,
+        "dPeriod": 3,
+        "smoothK": 3,
+        "oversold": 20,
+        "overbought": 80
+      },
+      "signals": {
+        "bullishCrossover": "K crosses above D in oversold zone → +18",
+        "bearishCrossover": "K crosses below D in overbought zone → -18",
+        "bullish": "K < oversold → +10",
+        "bearish": "K > overbought → -10"
+      }
+    },
+    
+    "EMA_TREND": {
+      "weight": 19,
+      "maxScore": 38,
+      "formula": "EMA = Price × k + prevEMA × (1-k), k = 2/(period+1)",
+      "parameters": {
+        "shortPeriod": 10,
+        "mediumPeriod": 25,
+        "longPeriod": 50
+      },
+      "signals": {
+        "goldenCross": "shortEMA crosses above longEMA → +20",
+        "deathCross": "shortEMA crosses below longEMA → -20",
+        "bullishAligned": "short > medium > long → +15",
+        "bearishAligned": "short < medium < long → -15",
+        "priceAboveLong": "close > longEMA → +5",
+        "priceBelowLong": "close < longEMA → -5"
+      }
+    },
+    
+    "AWESOME_OSCILLATOR": {
+      "weight": 17,
+      "maxScore": 34,
+      "formula": "AO = SMA(medianPrice, 5) - SMA(medianPrice, 34), medianPrice = (high + low) / 2",
+      "signals": {
+        "bullishCross": "AO crosses above zero → +17",
+        "bearishCross": "AO crosses below zero → -17",
+        "bullishSaucer": "AO > 0 AND was falling now rising → +12",
+        "bearishSaucer": "AO < 0 AND was rising now falling → -12",
+        "bullish": "AO > 0 → +5",
+        "bearish": "AO < 0 → -5"
+      }
+    },
+    
+    "KDJ": {
+      "weight": 17,
+      "maxScore": 34,
+      "winRate": "66.7%",
+      "formula": "RSV = (Close - LowestLow) / (HighestHigh - LowestLow) × 100, K = 2/3 × prevK + 1/3 × RSV, D = 2/3 × prevD + 1/3 × K, J = 3K - 2D",
+      "parameters": {
+        "period": 9,
+        "kSmooth": 3,
+        "dSmooth": 3
+      },
+      "signals": {
+        "bullishExtreme": "J < 0 → +17",
+        "bearishExtreme": "J > 100 → -17",
+        "bullishCrossover": "K crosses above D AND K < 20 → +15",
+        "bearishCrossover": "K crosses below D AND K > 80 → -15",
+        "bullish": "K < 20 → +10",
+        "bearish": "K > 80 → -10"
+      }
+    },
+    
+    "OBV": {
+      "weight": 18,
+      "maxScore": 36,
+      "formula": "OBV += Volume if close > prevClose, OBV -= Volume if close < prevClose",
+      "signals": {
+        "bullishConfirmation": "price rising AND OBV rising AND OBV > SMA(OBV, 20) → +18",
+        "bearishConfirmation": "price falling AND OBV falling AND OBV < SMA(OBV, 20) → -18",
+        "bullishDivergence": "price falling AND OBV rising → +10",
+        "bearishDivergence": "price rising AND OBV falling → -10"
+      }
+    },
+    
+    "CMF": {
+      "weight": 19,
+      "maxScore": 38,
+      "formula": "MFM = ((Close - Low) - (High - Close)) / (High - Low), MFV = MFM × Volume, CMF = Sum(MFV, 20) / Sum(Volume, 20)",
+      "parameters": {
+        "period": 20
+      },
+      "signals": {
+        "strongBullish": "CMF > 0.1 → +19",
+        "bullish": "CMF > 0 → +10",
+        "strongBearish": "CMF < -0.1 → -19",
+        "bearish": "CMF < 0 → -10",
+        "bullishCross": "CMF crosses above 0 → +5 bonus",
+        "bearishCross": "CMF crosses below 0 → -5 bonus"
+      }
+    },
+    
+    "ATR": {
+      "weight": 15,
+      "maxScore": 30,
+      "formula": "TR = max(High - Low, |High - prevClose|, |Low - prevClose|), ATR = SMA(TR, 14), ATR% = ATR / Close × 100",
+      "parameters": {
+        "period": 14
+      },
+      "volatilityRegimes": {
+        "LOW":    { "percentile": "0-25",   "scoreModifier": 15,  "positionMultiplier": 1.5, "maxLeverage": 20 },
+        "MEDIUM": { "percentile": "25-75",  "scoreModifier": 5,   "positionMultiplier": 1.0, "maxLeverage": 15 },
+        "HIGH":   { "percentile": "75-100", "scoreModifier": -15, "positionMultiplier": 0.5, "maxLeverage": 10 }
+      }
+    },
+    
+    "CCI": {
+      "weight": 16,
+      "maxScore": 32,
+      "formula": "TP = (High + Low + Close) / 3, CCI = (TP - SMA(TP, 20)) / (0.015 × MeanDeviation)",
+      "parameters": {
+        "period": 20,
+        "overbought": 100,
+        "oversold": -100
+      },
+      "signals": {
+        "extremeOversold": "CCI < -200 → +16",
+        "oversold": "CCI < -100 → +10",
+        "extremeOverbought": "CCI > 200 → -16",
+        "overbought": "CCI > 100 → -10",
+        "bullishCross": "CCI crosses above 0 → +5 bonus",
+        "bearishCross": "CCI crosses below 0 → -5 bonus"
+      }
+    },
+    
+    "DOM": {
+      "weight": 15,
+      "maxScore": 30,
+      "formula": "imbalance = (totalBidVolume - totalAskVolume) / (totalBidVolume + totalAskVolume)",
+      "parameters": {
+        "depth": 10
+      },
+      "signals": {
+        "strongBidImbalance": "imbalance > 0.3 → +15",
+        "moderateBidImbalance": "imbalance > 0.1 → +8",
+        "slightBidImbalance": "imbalance > 0 → 0",
+        "strongAskImbalance": "imbalance < -0.3 → -15",
+        "moderateAskImbalance": "imbalance < -0.1 → -8",
+        "slightAskImbalance": "imbalance < 0 → 0"
+      }
+    }
+  },
+  
+  "indicatorEnables": {
+    "5min":  { "RSI": true, "STOCHRSI": true, "MACD": false, "BOLLINGER": true, "WILLIAMS_R": true, "STOCHASTIC": true, "EMA_TREND": false, "AO": false, "KDJ": true, "OBV": true, "CMF": false, "CCI": true },
+    "15min": { "RSI": true, "STOCHRSI": true, "MACD": true,  "BOLLINGER": true, "WILLIAMS_R": true, "STOCHASTIC": true, "EMA_TREND": true,  "AO": false, "KDJ": true, "OBV": true, "CMF": true,  "CCI": true },
+    "30min": { "RSI": true, "STOCHRSI": true, "MACD": true,  "BOLLINGER": true, "WILLIAMS_R": true, "STOCHASTIC": true, "EMA_TREND": true,  "AO": true,  "KDJ": true, "OBV": true, "CMF": true,  "CCI": true },
+    "1hour": { "RSI": true, "STOCHRSI": true, "MACD": false, "BOLLINGER": true, "WILLIAMS_R": true, "STOCHASTIC": true, "EMA_TREND": false, "AO": false, "KDJ": true, "OBV": false,"CMF": false, "CCI": true },
+    "2hour": { "RSI": true, "STOCHRSI": true, "MACD": true,  "BOLLINGER": true, "WILLIAMS_R": true, "STOCHASTIC": true, "EMA_TREND": true,  "AO": true,  "KDJ": true, "OBV": true, "CMF": true,  "CCI": true },
+    "4hour": { "RSI": true, "STOCHRSI": true, "MACD": true,  "BOLLINGER": true, "WILLIAMS_R": true, "STOCHASTIC": true, "EMA_TREND": true,  "AO": true,  "KDJ": true, "OBV": true, "CMF": true,  "CCI": true }
+  },
+  
+  "entryGates": {
+    "threshold": { "minScore": 75, "strongScore": 90, "extremeScore": 100 },
+    "deadZone": { "range": 20 },
+    "confluence": { "minPercentage": 50, "minCount": 4 },
+    "confidence": { "minConfidence": 0.85 },
+    "trendAlignment": { "enabled": true },
+    "drawdown": { "maxDrawdown": 0.03 },
+    "volatility": { "highVolThresholdBoost": 10 }
+  },
+  
+  "scoreBands": {
+    "enabled": true,
+    "bands": [
+      { "name": "LOW_BAND", "min": 70, "max": 89 },
+      { "name": "HIGH_BAND", "min": 90, "max": 125 }
+    ],
+    "toxic": [
+      { "name": "OVER_FIT", "min": 126, "max": 220 }
+    ]
+  },
+  
+  "confidencePenalties": {
+    "chop": { "condition": "LOW volatility AND |score| < 80", "penalty": 0.05 },
+    "highVolatility": { "condition": "ATR% > 6", "penalty": 0.06 },
+    "mediumVolatility": { "condition": "ATR% > 4", "penalty": 0.03 },
+    "conflictingSignals": { "condition": "bullish > 0 AND bearish > 0", "penaltyPerConflict": 0.02 },
+    "weakScore": { "condition": "|score| < 60", "penalty": 0.10 },
+    "lowConfluence": { "condition": "confluence < 60%", "penalty": 0.05 }
+  },
+  
+  "riskManagement": {
+    "position": {
+      "defaultSizePct": 2,
+      "minSizePct": 0.1,
+      "maxSizePct": 5,
+      "maxOpenPositions": 5,
+      "formula": "notional = balance × sizePct / 100, size = floor((notional × leverage / price / multiplier) / lotSize) × lotSize"
+    },
+    "leverage": {
+      "default": 6,
+      "min": 1,
+      "max": 10,
+      "volatilityBased": true
+    },
+    "stopLoss": {
+      "roiPct": 6,
+      "hardLimitPct": 10,
+      "takerFeePct": 0.06,
+      "formula": {
+        "long": "SL = entry × (1 - (SL_ROI - 2×fee) / leverage / 100)",
+        "short": "SL = entry × (1 + (SL_ROI - 2×fee) / leverage / 100)"
+      }
+    },
+    "takeProfit": {
+      "roiPct": 15,
+      "partialExits": [
+        { "roi": 4, "exitPct": 25 },
+        { "roi": 8, "exitPct": 25 },
+        { "roi": 12, "exitPct": 25 }
+      ],
+      "formula": {
+        "long": "TP = entry × (1 + TP_ROI / leverage / 100)",
+        "short": "TP = entry × (1 - TP_ROI / leverage / 100)"
+      }
+    },
+    "breakEven": {
+      "activationROI": 1.0,
+      "buffer": 0.05,
+      "formula": "BE_ROI = (takerFee × 2 × 100) + buffer = 0.17% (leverage-independent)"
+    },
+    "trailingStop": {
+      "activationROI": 2,
+      "trailPct": 1.0,
+      "rule": "NEVER_UNTRAIL",
+      "formula": {
+        "long": "newStop = max(currentStop, currentPrice × (1 - trailPct / leverage / 100))",
+        "short": "newStop = min(currentStop, currentPrice × (1 + trailPct / leverage / 100))"
+      }
+    },
+    "milestones": [
+      { "roi": 1.0, "lockROI": 0.2 },
+      { "roi": 2.0, "lockROI": 0.8 },
+      { "roi": 3.0, "lockROI": 1.5 },
+      { "roi": 4.0, "lockROI": 2.5 },
+      { "roi": 6.0, "lockROI": 4.0 },
+      { "roi": 8.0, "lockROI": 6.0 }
+    ],
+    "liquidation": {
+      "maintMarginRate": 0.005,
+      "minBuffer": 0.05,
+      "formula": {
+        "long": "Liq = entry × (1 - (1/leverage) × (1 - MMR))",
+        "short": "Liq = entry × (1 + (1/leverage) × (1 - MMR))"
+      }
+    }
+  },
+  
+  "roiCalculations": {
+    "long": "ROI = ((currentPrice - entryPrice) / entryPrice) × leverage × 100",
+    "short": "ROI = ((entryPrice - currentPrice) / entryPrice) × leverage × 100",
+    "pnl": {
+      "gross": "side === 'LONG' ? (exitValue - entryValue) : (entryValue - exitValue)",
+      "net": "grossPnL - (entryValue × takerFee) - (exitValue × takerFee)"
+    }
+  },
+  
+  "invariants": [
+    { "id": "I-001", "name": "position-size-limit", "rule": "positionNotional <= balance × MAX_POSITION_PCT / 100" },
+    { "id": "I-002", "name": "total-exposure-limit", "rule": "totalExposure <= balance × MAX_EXPOSURE_PCT / 100" },
+    { "id": "I-003", "name": "leverage-bounds", "rule": "leverage >= MIN_LEVERAGE AND leverage <= MAX_LEVERAGE" },
+    { "id": "I-004", "name": "stop-loss-required", "rule": "position.stopLossOrderId !== null" },
+    { "id": "I-005", "name": "liquidation-buffer", "rule": "|currentPrice - liquidationPrice| / currentPrice >= 0.05" },
+    { "id": "I-006", "name": "daily-drawdown", "rule": "(startOfDayBalance - currentBalance) / startOfDayBalance <= 0.03" },
+    { "id": "I-007", "name": "no-withdrawal-perms", "rule": "!apiPermissions.includes('withdrawal')" }
+  ]
+}

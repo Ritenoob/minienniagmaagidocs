@@ -1,0 +1,371 @@
+The Complete Information Taxonomy for a Trading Bot
+1. Market Data (What the Market Is Doing)
+1.1 Price Data
+
+OHLCV (multiple timeframes)
+
+Tick / trade prints
+
+VWAP
+
+Mark price
+
+Index price
+
+Settlement price
+
+Failure mode if missing: signals are delayed, distorted, or lagging.
+
+1.2 Order Book / Depth Data
+
+Level 1 (best bid/ask)
+
+Level 2 / DOM
+
+Depth imbalance
+
+Liquidity walls
+
+Microprice
+
+Failure mode: entries/exits are mistimed, slippage explodes.
+
+1.3 Volume & Flow
+
+Aggressive buy vs sell volume
+
+Trade velocity
+
+Absorption / exhaustion
+
+Volume delta
+
+Failure mode: bot trades into traps and fake breakouts.
+
+1.4 Derivatives-Specific Data (if futures/perps)
+
+Funding rates (current, predicted)
+
+Open interest
+
+Basis (spot vs futures)
+
+Liquidation clusters (if available)
+
+Failure mode: bot trades crowded positions at inflection points.
+
+2. Indicator & Feature Information (What the Market Means)
+2.1 Technical Indicators
+
+Momentum (RSI, MACD, AO)
+
+Oscillators (Stoch, Williams %R, KDJ)
+
+Trend (EMA, SMA, slope)
+
+Volatility (ATR, Bollinger Bands)
+
+Volume-based (OBV)
+
+Each indicator must expose:
+
+Direction
+
+Strength
+
+Regime sensitivity
+
+Confidence
+
+2.2 Microstructure Features
+
+Bid/ask imbalance
+
+Spread compression/expansion
+
+Flow dominance
+
+Funding skew
+
+Price ratios (mark/index)
+
+Failure mode: bot ignores how price is moving.
+
+2.3 Cross-Timeframe Context
+
+Higher TF bias
+
+Lower TF entry timing
+
+Alignment / conflict states
+
+Failure mode: bot fades strong trends or chases noise.
+
+3. Signal Intelligence (When to Act)
+3.1 Signal Construction
+
+Scoring model
+
+Weighting system
+
+Feature aggregation
+
+Thresholds
+
+Direction encoding
+
+3.2 Signal Validity
+
+Staleness windows
+
+Invalidation rules
+
+Regime mismatch checks
+
+Liquidity checks
+
+3.3 Explainability
+
+Feature contributions
+
+Why signal exists
+
+Why signal was rejected
+
+Failure mode: you can’t debug or improve the bot.
+
+4. Execution Information (How to Act)
+4.1 Exchange Constraints
+
+Tick size
+
+Lot size
+
+Min/max notional
+
+Leverage limits
+
+Rate limits
+
+4.2 Order Semantics
+
+Order types
+
+Post-only rules
+
+Reduce-only flags
+
+Time-in-force
+
+Cancel/replace behavior
+
+4.3 Execution State
+
+Order lifecycle
+
+Partial fills
+
+Slippage
+
+Fees
+
+Latency
+
+Failure mode: fills don’t match expectations; PnL is wrong.
+
+5. Position Information (What You Hold)
+
+Net position
+
+Average entry
+
+Unrealized PnL
+
+Realized PnL
+
+Liquidation price
+
+Funding paid/received
+
+Failure mode: bot thinks it’s flat when it isn’t.
+
+6. Risk Information (What You Can Afford)
+6.1 Account-Level Risk
+
+Account equity
+
+Margin usage
+
+Leverage exposure
+
+Daily loss limits
+
+6.2 Trade-Level Risk
+
+Position sizing inputs
+
+Stop distance
+
+Risk per trade
+
+Max concurrent positions
+
+6.3 Market Risk Filters
+
+Spread thresholds
+
+Volatility spikes
+
+Funding extremes
+
+Illiquidity flags
+
+Failure mode: one bad trade nukes the account.
+
+7. Strategy Configuration (What the Bot Believes)
+
+Indicator parameters
+
+Weights
+
+Thresholds
+
+Timeframes
+
+Symbol universe
+
+Feature toggles
+
+Must be:
+
+Versioned
+
+Validated
+
+Immutable at runtime
+
+8. Learning & Optimization Data (How It Improves)
+8.1 Backtest Data
+
+Clean historical data
+
+Survivorship-aware
+
+Corporate action adjusted (if relevant)
+
+8.2 Paper Trading Data
+
+Real-time signals
+
+Simulated fills
+
+Latency & slippage models
+
+8.3 Performance Metrics
+
+Win rate
+
+Expectancy
+
+Drawdown
+
+Sharpe / Sortino
+
+Regime breakdown
+
+9. Feedback Loop (What Actually Happened)
+
+Execution reports
+
+Slippage vs expectation
+
+Fill quality
+
+Exit reason
+
+Trade duration
+
+This is the bridge between research and reality.
+
+10. System Health & Telemetry (Is It Alive?)
+
+WebSocket lag
+
+Disconnects
+
+Reconnects
+
+Missed data
+
+Rate-limit pressure
+
+Clock skew
+
+Failure mode: silent death while you think it’s trading.
+
+11. Persistence & Auditability (Can You Prove It?)
+
+Journals (append-only)
+
+Correlation IDs
+
+Replayability
+
+Deterministic state recovery
+
+Failure mode: impossible post-mortems.
+
+12. Control & Governance (Who Is in Charge)
+12.1 Manual Controls
+
+Start/stop
+
+Pause auto
+
+Cancel all
+
+Flatten positions
+
+12.2 Permissions
+
+Who can trade
+
+Who can change configs
+
+Who can deploy
+
+12.3 Safety Systems
+
+Kill switch
+
+Circuit breakers
+
+Emergency shutdown
+
+13. Deployment & Operations (Can It Run Forever?)
+
+Secrets management
+
+Environment separation
+
+Versioning
+
+Rollbacks
+
+Monitoring
+
+Alerting
+
+14. Legal & Compliance (Often Ignored, Still Real)
+
+Exchange TOS compliance
+
+Logging requirements
+
+Data retention
+
+Audit readiness
+
+The One-Sentence Truth
+
+A trading bot is not a strategy — it is an information system that converts market state into risk-constrained decisions under uncertainty.

@@ -1,0 +1,370 @@
+🏗️ Full Development Plan
+Production-Grade Trading Bot (Signal → Execution → Learning)
+
+Objective
+Build a deterministic, auditable, multi-indicator + microstructure trading system that safely transitions from research → paper → live trading.
+
+Design Principle
+
+Separate belief, permission, and action.
+No layer may bypass the next.
+
+1. Team Structure & Ownership
+Core Roles
+1. Quant / Signal Engineer
+
+Owns
+
+Indicators
+
+Microstructure analyzers
+
+Signal scoring logic
+
+Backtest & optimizer logic
+
+2. Execution Engineer
+
+Owns
+
+OMS / EMS
+
+Exchange adapters
+
+Position state
+
+Risk enforcement
+
+Kill switch
+
+3. Platform / Infra Engineer
+
+Owns
+
+WebSocket reliability
+
+Persistence & journaling
+
+Reconciliation
+
+Monitoring & alerting
+
+Deployments
+
+4. Frontend Engineer
+
+Owns
+
+Trader Dashboard
+
+Signal Dashboard
+
+Controls & UX safety
+
+Visualization
+
+5. Tech Lead / Architect
+
+Owns
+
+Interface contracts
+
+Versioning
+
+Architecture enforcement
+
+PR gatekeeping
+
+2. Phase-Based Delivery Plan (Authoritative)
+🔹 PHASE 0 — Foundations (Week 1)
+
+Goal: Prevent architectural mistakes before code exists.
+
+Deliverables
+
+Stack policy (languages + boundaries)
+
+Interface contracts (Signal v1, ExecutionReport v1)
+
+Repo structure finalized
+
+Configuration schema defined
+
+Correlation ID standard defined
+
+Acceptance Criteria
+
+All teams agree on boundaries
+
+Schemas validated in TS + Rust + Python
+
+No execution code exists yet
+
+🔹 PHASE 1 — Market Data & Signal Layer (Weeks 2–4)
+
+Goal: Produce trustworthy, explainable signals.
+
+Quant Team Tasks
+
+Implement all 10 enhanced indicators
+
+Implement 3 microstructure analyzers (live-only)
+
+Implement TimeframeAligner
+
+Implement SignalGeneratorV2
+
+Implement score clamping logic
+
+Platform Tasks
+
+WebSocketManager (token refresh, reconnects)
+
+Deterministic event ordering
+
+Data staleness detection
+
+Outputs
+
+Signal(v1) stream
+
+Feature breakdown per signal
+
+Coin ranking stream
+
+Acceptance Criteria
+
+Signals are reproducible from replay
+
+No NaNs, no unbounded scores
+
+Every signal is explainable
+
+🔹 PHASE 2 — Research, Backtest & Paper Trading (Weeks 5–6)
+
+Goal: Validate signal quality before touching execution.
+
+Quant Team Tasks
+
+Deterministic backtest engine
+
+PaperTradingEngineV2
+
+Walk-forward validation
+
+Performance metrics (Sharpe, DD, expectancy)
+
+Platform Tasks
+
+Historical data ingestion
+
+Replay harness
+
+Config versioning
+
+Outputs
+
+Backtest reports
+
+Paper trade lifecycle logs
+
+Optimizer outputs
+
+Acceptance Criteria
+
+Backtest == replayed paper logic
+
+Results traceable to config version
+
+No lookahead bias
+
+🔹 PHASE 3 — Execution Core (OMS / EMS) (Weeks 7–9)
+
+Goal: Safe, deterministic execution — no UI yet.
+
+Execution Team Tasks
+
+ExchangeAdapter (KuCoin Futures)
+
+OrderManager (OMS)
+
+ExecutionEngine (EMS)
+
+PositionManager
+
+RiskManager
+
+KillSwitch
+
+Platform Tasks
+
+Reconciliation engine
+
+JournalWriter (append-only)
+
+Restart safety
+
+Outputs
+
+ExecutionReport(v1)
+
+Deterministic journals
+
+Reconcile-on-start
+
+Acceptance Criteria
+
+Restart does not orphan orders
+
+RiskManager blocks unsafe trades
+
+KillSwitch flattens everything
+
+🔹 PHASE 4 — Trader Dashboard (Weeks 10–11)
+
+Goal: Human-in-the-loop execution.
+
+Frontend Tasks
+
+Signal Inbox
+
+Trade Ticket
+
+Blotter
+
+Positions panel
+
+Auto trading controls
+
+Risk & health panel
+
+Backend Tasks
+
+ExecutionIntent API
+
+Permission enforcement
+
+Rate limiting
+
+Acceptance Criteria
+
+Manual trades go through same pipeline as auto
+
+UI cannot bypass risk
+
+Live account truth matches exchange
+
+🔹 PHASE 5 — Signal Dashboard (Weeks 12–13)
+
+Goal: Continuous improvement without execution risk.
+
+Frontend Tasks
+
+Coin screener
+
+Signal monitor
+
+Weights/config editor
+
+Performance analytics
+
+Microstructure telemetry
+
+Quant Tasks
+
+Config promotion workflow
+
+A/B comparison tooling
+
+Acceptance Criteria
+
+Configs are versioned & diffed
+
+No signal edits affect live execution without approval
+
+ExecutionReports feed analytics
+
+🔹 PHASE 6 — Auto Trading Enablement (Week 14)
+
+Goal: Controlled automation.
+
+Tasks
+
+Auto policy layer
+
+Cooldowns
+
+Max concurrency rules
+
+Emergency disable hooks
+
+Acceptance Criteria
+
+Auto ON/OFF is instant
+
+Kill switch always wins
+
+All auto trades auditable
+
+🔹 PHASE 7 — Production Hardening (Weeks 15–16)
+
+Goal: Survive reality.
+
+Tasks
+
+Alerting (PnL, disconnects, lag)
+
+Rate-limit pressure monitoring
+
+Latency tracking
+
+Canary deployments
+
+Acceptance Criteria
+
+Silent failure impossible
+
+Metrics visible in real time
+
+Rollback tested
+
+3. Information Ownership Matrix
+Layer	Owner	Can Block Lower Layers
+Market Data	Platform	❌
+Indicators	Quant	❌
+Signals	Quant	❌
+Risk	Execution	✅
+Execution	Execution	✅
+Position	Execution	✅
+UI	Frontend	❌
+Kill Switch	Execution	✅
+4. Non-Negotiable Engineering Rules
+
+No schema, no merge
+
+No risk approval, no order
+
+No journal entry, it didn’t happen
+
+No replayability, not production-ready
+
+Execution truth beats signal belief
+
+5. Definition of “Done” (Real One)
+
+The system is done when:
+
+You can replay any day and get the same decisions
+
+You can explain why every trade happened
+
+You can kill the system in <1 second
+
+You can change signals without risking capital
+
+You trust it enough to sleep
+
+Final Line for the Team
+
+We are not building a strategy.
+We are building a decision system that survives uncertainty.

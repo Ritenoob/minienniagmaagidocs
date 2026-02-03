@@ -1,0 +1,455 @@
+Two Dashboards: Recommended Split, Authority, and Data Flow
+High-Level Rule (Non-Negotiable)
+
+Dashboard A can move money.
+Dashboard B can change ideas.
+Neither can do the other.
+
+They may observe each other’s outputs, but authority never overlaps.
+
+Dashboard A — Trader Dashboard
+
+(Execution + Account Authority)
+
+Purpose (Authoritative)
+
+Place / modify / cancel orders
+
+Manage live positions
+
+Run auto trading
+
+Enforce risk & safety
+
+Display exchange truth
+
+This is the only UI allowed to:
+
+Send execution intents
+
+Toggle auto mode
+
+Trigger kill switches
+
+Primary Data Sources (Authoritative Order)
+
+Execution Service (source of truth)
+
+Orders (OMS)
+
+Fills
+
+Positions
+
+Margin / leverage
+
+Risk state
+
+Health & latency
+
+Signal Stream (read-only)
+
+Ranked Signal(v1) objects
+
+Entry/exit intent
+
+Feature breakdown
+
+Signals are suggestions.
+Execution state is law.
+
+Core Screens (with Authority Notes)
+1. Signal Inbox
+
+Data
+
+Signal(v1): score, confidence, timeframes
+
+Entry/exit plans
+
+Feature contributions
+
+Invalidation rules
+
+Actions
+
+✅ Accept → creates ExecutionIntent
+
+✏️ Modify → constrained overrides (qty, band, SL/TP)
+
+❌ Reject → logged, no execution
+
+Rules
+
+Cannot edit signal logic
+
+Cannot change weights
+
+Cannot rescore
+
+2. Trade Ticket
+
+Controls
+
+Side (locked to signal)
+
+Quantity (via PositionSizer bounds)
+
+Leverage (within RiskManager caps)
+
+Limit price band
+
+Post-only toggle
+
+SL / TP / trailing
+
+Reduce-only
+
+Timeouts
+
+Rules
+
+All inputs revalidated by RiskManager
+
+UI never bypasses OMS/EMS
+
+3. Blotter
+
+Data
+
+Open orders
+
+Recent fills
+
+Order lifecycle timeline
+
+Authority
+
+Cancel / amend only
+
+No re-entry logic
+
+4. Positions
+
+Data
+
+Net position
+
+Live PnL
+
+Liquidation distance
+
+Funding
+
+Trailing stops
+
+Actions
+
+Close
+
+Reduce
+
+Move stop / TP
+
+5. Auto Trading Control
+
+Controls
+
+Auto ON / OFF
+
+Per-symbol enable/disable
+
+Cooldowns
+
+Max concurrent positions
+
+Kill Switch (Hard)
+
+Cancel all orders
+
+Flatten all positions
+
+Disable auto globally
+
+6. Risk + Health
+
+Data
+
+Exposure caps
+
+Daily loss
+
+Staleness / spread / funding gates
+
+WS lag
+
+Reconnect count
+
+Rate-limit pressure
+
+Permissions (Trader Dashboard)
+
+✅ Can:
+
+Execute trades
+
+Manage positions
+
+Control auto mode
+
+Trigger kill switch
+
+❌ Cannot:
+
+Edit signal weights
+
+Change screening logic
+
+Run backtests
+
+Modify indicator configs
+
+Dashboard B — Signal Generator / Coin Screener
+
+(Research + Opportunity Generation)
+
+Purpose (Authoritative)
+
+Monitor screening & signal generation
+
+Tune weights/configs
+
+Analyze performance
+
+Run paper / backtests / optimizers
+
+Observe microstructure telemetry
+
+This dashboard cannot move money.
+
+Primary Data Sources
+
+Signal Engine
+
+Screener rankings
+
+Feature values
+
+Signal decisions
+
+Weights & configs
+
+Invalidation reasons
+
+Execution Reports (read-only)
+
+Fill rate
+
+Slippage
+
+Fees
+
+Funding
+
+PnL outcomes (by signalId)
+
+Core Screens
+1. Coin Screener
+
+Data
+
+Top-N ranked symbols
+
+Volatility / volume / liquidity gates
+
+Regime filters
+
+Visuals
+
+Heatmaps by timeframe
+
+Regime overlays
+
+2. Signal Monitor
+
+Data
+
+Live Signal(v1) stream
+
+Indicator + microstructure contributions
+
+“Why traded / why not traded”
+
+Key Feature
+
+Explicit invalidation timelines
+
+3. Weights + Config Studio
+
+Controls
+
+Indicator weights
+
+Thresholds
+
+Timeframe aligner rules
+
+Feature toggles
+
+Safeguards
+
+Schema validation
+
+Versioning
+
+Diff preview
+
+Output
+
+New config version (never hot-patched into live)
+
+4. Performance Analytics
+
+Data (joined on signalId)
+
+Fill rate
+
+Slippage
+
+Fees
+
+Funding
+
+Expectancy
+
+Win/loss
+
+Drawdown
+
+Sharpe / Sortino (from backtest/paper)
+
+5. Paper / Backtest / Optimizer Control
+
+Controls
+
+Start / stop runs
+
+Walk-forward validation
+
+Parameter sweeps
+
+A/B config comparison
+
+Promotion Flow
+
+Research → Candidate → Approved for live (manual step)
+
+6. Microstructure Telemetry (Live-only)
+
+Panels
+
+DOM imbalance
+
+Trade flow
+
+Funding rate deltas
+
+Mark vs index spread
+
+Flags
+
+Data freshness
+
+Quality degradation warnings
+
+Permissions (Signal Dashboard)
+
+✅ Can:
+
+Modify signal configs
+
+Tune weights
+
+Run research jobs
+
+Promote configs to “live candidate”
+
+❌ Cannot:
+
+Place orders
+
+Modify execution parameters
+
+Control auto mode
+
+Affect OMS/EMS directly
+
+How They Work Together (Strict Contract)
+Signal Engine → Execution
+
+Only one thing
+
+Signal(v1)
+
+
+Sole source of trade opportunities
+
+Immutable once published
+
+Schema-validated
+
+Execution → Signal Engine
+
+Only one thing
+
+ExecutionReport(v1)
+
+
+Truth about what happened
+
+Accepted / rejected
+
+Fills, PnL, slippage, exit reason
+
+Shared Real-Time Streams
+Trader Dashboard subscribes to:
+
+Execution state (authoritative)
+
+Signal stream (read-only)
+
+Signal Dashboard subscribes to:
+
+Signal stream
+
+Screener internals
+
+Execution reports (analytics only)
+
+Authority Matrix (One Glance)
+Capability	Trader Dashboard	Signal Dashboard
+Place orders	✅	❌
+Auto trading	✅	❌
+Kill switch	✅	❌
+View signals	✅	✅
+Edit weights	❌	✅
+Run backtests	❌	✅
+View execution reports	✅	✅
+Exchange access	Indirect	❌
+Why This Split Works (For Your System)
+
+Matches your rare, high-conviction signal model
+
+Prevents research tweaks from destabilizing execution
+
+Keeps execution deterministic and auditable
+
+Enables fast iteration on signals without risking capital
+
+Scales cleanly to multiple traders / strategies later
+
+One Sentence to Lock It In
+
+Dashboard A executes reality.
+Dashboard B improves ideas.
+Signals connect them — reports keep them honest.
