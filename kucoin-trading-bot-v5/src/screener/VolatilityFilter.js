@@ -142,7 +142,21 @@ class VolatilityFilter {
     const avgATR = recentATRs.reduce((a, b) => a + b, 0) / recentATRs.length;
     
     // Relative ATR (current vs average)
-    const relativeATR = avgATR > 0 ? currentATR / avgATR : 1;
+    let relativeATR;
+    if (avgATR === 0 && currentATR === 0) {
+      // Avoid 0/0 -> NaN; treat as neutral volatility
+      relativeATR = 1;
+    } else if (avgATR > 0) {
+      relativeATR = currentATR / avgATR;
+    } else {
+      // Fallback for unexpected non-positive avgATR
+      relativeATR = 1;
+    }
+
+    // Ensure relativeATR is a finite number
+    if (!Number.isFinite(relativeATR)) {
+      relativeATR = 1;
+    }
     
     // Historical volatility (standard deviation of returns)
     const returns = [];
