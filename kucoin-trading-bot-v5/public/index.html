@@ -444,7 +444,13 @@
 </head>
 <body>
   <header>
-    <div class="logo">⚡ KuCoin Futures Bot</div>
+    <div style="display: flex; align-items: center; gap: 24px;">
+      <div class="logo">⚡ KuCoin Futures Bot</div>
+      <nav style="display: flex; gap: 8px;">
+        <a href="/" style="padding: 8px 16px; border-radius: 6px; background: var(--accent-blue); color: #fff; text-decoration: none; font-size: 14px; font-weight: 500;">Dashboard</a>
+        <a href="/screener" style="padding: 8px 16px; border-radius: 6px; color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 500;">🔍 Screener</a>
+      </nav>
+    </div>
     <div class="status-bar">
       <div class="status-item">
         <span class="status-dot" id="wsStatus"></span>

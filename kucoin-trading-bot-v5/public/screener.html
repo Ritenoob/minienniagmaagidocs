@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coin Screener | KuCoin Futures Bot</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg-primary: #0D0D0F;
+      --bg-secondary: #141417;
+      --bg-tertiary: #1A1A1F;
+      --bg-hover: #222228;
+      --border-default: #2A2A32;
+      --border-subtle: #1F1F26;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      
+      /* Signal Colors */
+      --profit-green: #00D084;
+      --profit-green-muted: rgba(0, 208, 132, 0.15);
+      --loss-red: #FF4757;
+      --loss-red-muted: rgba(255, 71, 87, 0.15);
+      --warning-amber: #FFB020;
+      --warning-amber-muted: rgba(255, 176, 32, 0.15);
+      --info-blue: #3B82F6;
+      --neutral-gray: #6B7280;
+      
+      /* Signal Classification Colors */
+      --extreme-buy: #00FF88;
+      --strong-buy: #00D084;
+      --buy: #4ADE80;
+      --buy-weak: #86EFAC;
+      --neutral: #6B7280;
+      --sell-weak: #FCA5A5;
+      --sell: #F87171;
+      --strong-sell: #FF4757;
+      --extreme-sell: #FF0040;
+    }
+    
+    body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-default);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    
+    .logo {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--info-blue);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .nav-link {
+      padding: 8px 16px;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .nav-link:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+    
+    .nav-link.active {
+      background: var(--info-blue);
+      color: #fff;
+    }
+    
+    .status-bar {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--profit-green);
+    }
+    
+    .status-dot.offline { background: var(--loss-red); }
+    .status-dot.warning { background: var(--warning-amber); }
+    
+    /* Main Container */
+    .container {
+      max-width: 1800px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    
+    /* Page Header */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+    }
+    
+    .page-subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    
+    /* Controls */
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .control-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    select, input {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+    }
+    
+    select:focus, input:focus {
+      border-color: var(--info-blue);
+    }
+    
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border-default);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      transition: all 0.2s;
+    }
+    
+    .btn:hover {
+      background: var(--bg-hover);
+    }
+    
+    .btn-primary {
+      background: var(--info-blue);
+      border-color: var(--info-blue);
+      color: #fff;
+    }
+    
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+    
+    /* Stats Summary */
+    .stats-summary {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      font-feature-settings: "tnum";
+    }
+    
+    .stat-value.green { color: var(--profit-green); }
+    .stat-value.red { color: var(--loss-red); }
+    .stat-value.amber { color: var(--warning-amber); }
+    
+    /* Screener Table */
+    .screener-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .screener-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid var(--border-default);
+    }
+    
+    .screener-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .screener-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    
+    .last-update {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .table-container {
+      overflow-x: auto;
+    }
+    
+    .screener-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    
+    .screener-table th {
+      background: var(--bg-tertiary);
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 500;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid var(--border-default);
+    }
+    
+    .screener-table th:hover {
+      color: var(--text-primary);
+    }
+    
+    .screener-table th.sorted {
+      color: var(--info-blue);
+    }
+    
+    .sort-icon {
+      margin-left: 4px;
+      opacity: 0.5;
+    }
+    
+    .screener-table th.sorted .sort-icon {
+      opacity: 1;
+    }
+    
+    .screener-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      font-feature-settings: "tnum";
+    }
+    
+    .screener-table tr:hover td {
+      background: var(--bg-hover);
+    }
+    
+    /* Symbol Column */
+    .symbol-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .symbol-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+    
+    .symbol-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .symbol-base {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    
+    /* Signal Score */
+    .signal-score {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .score-value {
+      font-weight: 700;
+      font-size: 14px;
+      min-width: 40px;
+    }
+    
+    .score-bar {
+      width: 80px;
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .score-bar-fill {
+      height: 100%;
+      position: absolute;
+      transition: width 0.3s ease;
+    }
+    
+    .score-bar-fill.positive {
+      background: linear-gradient(90deg, transparent, var(--profit-green));
+      left: 50%;
+    }
+    
+    .score-bar-fill.negative {
+      background: linear-gradient(270deg, transparent, var(--loss-red));
+      right: 50%;
+    }
+    
+    /* Signal Type Badge */
+    .signal-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .signal-badge.EXTREME_BUY {
+      background: rgba(0, 255, 136, 0.15);
+      color: var(--extreme-buy);
+    }
+    
+    .signal-badge.STRONG_BUY {
+      background: rgba(0, 208, 132, 0.15);
+      color: var(--strong-buy);
+    }
+    
+    .signal-badge.BUY {
+      background: rgba(74, 222, 128, 0.15);
+      color: var(--buy);
+    }
+    
+    .signal-badge.BUY_WEAK {
+      background: rgba(134, 239, 172, 0.15);
+      color: var(--buy-weak);
+    }
+    
+    .signal-badge.NEUTRAL {
+      background: rgba(107, 114, 128, 0.15);
+      color: var(--neutral);
+    }
+    
+    .signal-badge.SELL_WEAK {
+      background: rgba(252, 165, 165, 0.15);
+      color: var(--sell-weak);
+    }
+    
+    .signal-badge.SELL {
+      background: rgba(248, 113, 113, 0.15);
+      color: var(--sell);
+    }
+    
+    .signal-badge.STRONG_SELL {
+      background: rgba(255, 71, 87, 0.15);
+      color: var(--strong-sell);
+    }
+    
+    .signal-badge.EXTREME_SELL {
+      background: rgba(255, 0, 64, 0.15);
+      color: var(--extreme-sell);
+    }
+    
+    /* Confidence */
+    .confidence-bar {
+      width: 60px;
+      height: 4px;
+      background: var(--bg-tertiary);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    
+    .confidence-fill {
+      height: 100%;
+      background: var(--info-blue);
+      transition: width 0.3s ease;
+    }
+    
+    /* Price Change */
+    .price-change {
+      font-weight: 500;
+    }
+    
+    .price-change.positive { color: var(--profit-green); }
+    .price-change.negative { color: var(--loss-red); }
+    
+    /* Volume */
+    .volume-value {
+      color: var(--text-secondary);
+    }
+    
+    /* Indicator Pills */
+    .indicator-pills {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    
+    .indicator-pill {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+    
+    .indicator-pill.bullish {
+      background: var(--profit-green-muted);
+      color: var(--profit-green);
+    }
+    
+    .indicator-pill.bearish {
+      background: var(--loss-red-muted);
+      color: var(--loss-red);
+    }
+    
+    /* Actions */
+    .action-btn {
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border-default);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      transition: all 0.2s;
+    }
+    
+    .action-btn:hover {
+      background: var(--info-blue);
+      border-color: var(--info-blue);
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 48px;
+      color: var(--text-secondary);
+    }
+    
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    
+    /* Loading */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+      color: var(--text-secondary);
+    }
+    
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--bg-tertiary);
+      border-top-color: var(--info-blue);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 12px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .stats-summary {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .stats-summary {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .controls {
+        flex-wrap: wrap;
+      }
+      
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+    }
+    
+    /* Tooltip */
+    .tooltip {
+      position: relative;
+    }
+    
+    .tooltip:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 6px 10px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+      border-radius: 4px;
+      font-size: 11px;
+      white-space: nowrap;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <div class="logo">⚡ KuCoin Futures Bot</div>
+      <nav class="nav-links">
+        <a href="/" class="nav-link">Dashboard</a>
+        <a href="/screener" class="nav-link active">Screener</a>
+      </nav>
+    </div>
+    <div class="status-bar">
+      <div class="status-item">
+        <span class="status-dot" id="wsStatus"></span>
+        <span id="wsStatusText">Connecting...</span>
+      </div>
+      <div class="status-item">
+        <span>Coins:</span>
+        <strong id="coinCount">0</strong>
+      </div>
+      <div class="status-item">
+        <span>Signals:</span>
+        <strong id="signalCount">0</strong>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">🔍 Coin Screener</h1>
+        <p class="page-subtitle">Real-time multi-indicator signal analysis across all futures pairs</p>
+      </div>
+      <div class="controls">
+        <div class="control-group">
+          <label class="control-label">Min Score:</label>
+          <!-- max=130 matches MAX_SIGNAL_SCORE constant (indicator max ±110 + microstructure max ±20) -->
+          <input type="number" id="minScore" value="30" min="0" max="130" style="width: 70px">
+        </div>
+        <div class="control-group">
+          <label class="control-label">Signal Type:</label>
+          <select id="signalFilter">
+            <option value="all">All Signals</option>
+            <option value="buy">Buy Only</option>
+            <option value="sell">Sell Only</option>
+            <option value="strong">Strong Only</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="refreshBtn">↻ Refresh</button>
+      </div>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="stats-summary">
+      <div class="stat-card">
+        <div class="stat-label">Total Coins</div>
+        <div class="stat-value" id="statTotalCoins">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Buy Signals</div>
+        <div class="stat-value green" id="statBuySignals">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Sell Signals</div>
+        <div class="stat-value red" id="statSellSignals">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Neutral</div>
+        <div class="stat-value" id="statNeutral">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Confidence</div>
+        <div class="stat-value" id="statAvgConfidence">0%</div>
+      </div>
+    </div>
+
+    <!-- Screener Table -->
+    <div class="screener-card">
+      <div class="screener-header">
+        <span class="screener-title">Futures Screener</span>
+        <div class="screener-meta">
+          <span class="last-update">
+            <span>Last update:</span>
+            <strong id="lastUpdate">--:--:--</strong>
+          </span>
+        </div>
+      </div>
+      
+      <div class="table-container">
+        <table class="screener-table">
+          <thead>
+            <tr>
+              <th data-sort="symbol">Symbol <span class="sort-icon">↕</span></th>
+              <th data-sort="score" class="sorted">Score <span class="sort-icon">↓</span></th>
+              <th data-sort="type">Signal <span class="sort-icon">↕</span></th>
+              <th data-sort="confidence">Confidence <span class="sort-icon">↕</span></th>
+              <th data-sort="indicatorScore">Ind. Score <span class="sort-icon">↕</span></th>
+              <th data-sort="microScore">Micro Score <span class="sort-icon">↕</span></th>
+              <th data-sort="price">Price <span class="sort-icon">↕</span></th>
+              <th data-sort="change">24h Change <span class="sort-icon">↕</span></th>
+              <th data-sort="volume">Volume 24h <span class="sort-icon">↕</span></th>
+              <th>Indicators</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="screenerBody">
+            <tr>
+              <td colspan="11">
+                <div class="loading">
+                  <div class="spinner"></div>
+                  <span>Loading screener data...</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // Constants - Signal scoring system configuration
+    // Maximum possible score from indicators (±110) + microstructure (±20) = ±130
+    const MAX_SIGNAL_SCORE = 130;
+    
+    // State
+    let screenerData = [];
+    let sortField = 'score';
+    let sortDirection = 'desc';
+    let lastUpdateTime = null;
+    
+    // Socket connection
+    const socket = io();
+    
+    // Elements
+    const wsStatus = document.getElementById('wsStatus');
+    const wsStatusText = document.getElementById('wsStatusText');
+    const screenerBody = document.getElementById('screenerBody');
+    const minScoreInput = document.getElementById('minScore');
+    const signalFilter = document.getElementById('signalFilter');
+    const refreshBtn = document.getElementById('refreshBtn');
+    
+    // Connection handlers
+    socket.on('connect', () => {
+      wsStatus.classList.remove('offline', 'warning');
+      wsStatusText.textContent = 'Connected';
+      fetchScreenerData();
+    });
+    
+    socket.on('disconnect', () => {
+      wsStatus.classList.add('offline');
+      wsStatusText.textContent = 'Disconnected';
+    });
+    
+    // Real-time signal updates
+    socket.on('signal_update', (data) => {
+      updateSignalData(data);
+    });
+    
+    // Fetch screener data via API
+    async function fetchScreenerData() {
+      try {
+        const [signalsRes, coinsRes] = await Promise.all([
+          fetch('/api/signals'),
+          fetch('/api/coins')
+        ]);
+        
+        const signals = await signalsRes.json();
+        const coins = await coinsRes.json();
+        
+        // Merge data
+        screenerData = signals.map(signal => {
+          const coin = coins.find(c => c.symbol === signal.symbol) || {};
+          return {
+            ...signal,
+            price: coin.lastPrice || 0,
+            change: coin.priceChangePercent || 0,
+            volume: coin.turnover24h || 0,
+            indicatorScore: signal.indicatorScore || 0,
+            microScore: signal.microstructureScore || 0
+          };
+        });
+        
+        // Add coins without signals
+        coins.forEach(coin => {
+          if (!screenerData.find(d => d.symbol === coin.symbol)) {
+            screenerData.push({
+              symbol: coin.symbol,
+              score: 0,
+              type: 'NEUTRAL',
+              confidence: 0,
+              indicatorScore: 0,
+              microScore: 0,
+              price: coin.lastPrice || 0,
+              change: coin.priceChangePercent || 0,
+              volume: coin.turnover24h || 0,
+              signalCount: 0
+            });
+          }
+        });
+        
+        lastUpdateTime = new Date();
+        renderScreener();
+        updateStats();
+      } catch (err) {
+        console.error('Failed to fetch screener data:', err);
+        showError();
+      }
+    }
+    
+    // Update single signal data
+    function updateSignalData(data) {
+      const idx = screenerData.findIndex(d => d.symbol === data.symbol);
+      if (idx >= 0) {
+        screenerData[idx] = {
+          ...screenerData[idx],
+          ...data.signal,
+          indicatorScore: data.signal.indicatorScore || 0,
+          microScore: data.signal.microstructureScore || 0
+        };
+      }
+      lastUpdateTime = new Date();
+      renderScreener();
+      updateStats();
+    }
+    
+    // Render screener table
+    function renderScreener() {
+      const minScore = parseInt(minScoreInput.value) || 0;
+      const filter = signalFilter.value;
+      
+      // Filter data
+      let filtered = screenerData.filter(d => {
+        if (Math.abs(d.score) < minScore) return false;
+        
+        switch (filter) {
+          case 'buy':
+            return d.score > 0;
+          case 'sell':
+            return d.score < 0;
+          case 'strong':
+            return Math.abs(d.score) >= 50;
+          default:
+            return true;
+        }
+      });
+      
+      // Sort data
+      filtered.sort((a, b) => {
+        let aVal = a[sortField];
+        let bVal = b[sortField];
+        
+        // Handle score sorting by absolute value for relevance
+        if (sortField === 'score') {
+          aVal = Math.abs(aVal);
+          bVal = Math.abs(bVal);
+        }
+        
+        if (typeof aVal === 'string') {
+          aVal = aVal.toLowerCase();
+          bVal = bVal.toLowerCase();
+        }
+        
+        if (sortDirection === 'asc') {
+          return aVal > bVal ? 1 : -1;
+        } else {
+          return aVal < bVal ? 1 : -1;
+        }
+      });
+      
+      // Update coin count
+      document.getElementById('coinCount').textContent = screenerData.length;
+      document.getElementById('signalCount').textContent = screenerData.filter(d => d.score !== 0).length;
+      
+      // Update last update time
+      if (lastUpdateTime) {
+        document.getElementById('lastUpdate').textContent = lastUpdateTime.toLocaleTimeString();
+      }
+      
+      // Render rows
+      if (filtered.length === 0) {
+        screenerBody.innerHTML = `
+          <tr>
+            <td colspan="11">
+              <div class="empty-state">
+                <div class="empty-state-icon">📊</div>
+                <div>No signals matching your criteria</div>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      
+      screenerBody.innerHTML = filtered.map(item => {
+        const scoreClass = item.score > 0 ? 'positive' : item.score < 0 ? 'negative' : '';
+        const scoreWidth = Math.min(Math.abs(item.score) / MAX_SIGNAL_SCORE * 100, 100) / 2;
+        const changeClass = item.change > 0 ? 'positive' : item.change < 0 ? 'negative' : '';
+        const baseCurrency = item.symbol.replace('USDTM', '');
+        
+        // Generate indicator pills based on indicator/micro scores
+        const indPills = generateIndicatorPills(item);
+        
+        return `
+          <tr data-symbol="${item.symbol}">
+            <td>
+              <div class="symbol-cell">
+                <div class="symbol-icon">${baseCurrency.slice(0, 2)}</div>
+                <div>
+                  <div class="symbol-name">${item.symbol}</div>
+                  <div class="symbol-base">${baseCurrency}/USDT</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="signal-score">
+                <span class="score-value" style="color: ${item.score > 0 ? 'var(--profit-green)' : item.score < 0 ? 'var(--loss-red)' : 'var(--text-secondary)'}">
+                  ${item.score > 0 ? '+' : ''}${formatNumber(item.score)}
+                </span>
+                <div class="score-bar">
+                  <div class="score-bar-fill ${scoreClass}" style="width: ${scoreWidth}%"></div>
+                </div>
+              </div>
+            </td>
+            <td><span class="signal-badge ${item.type}">${formatSignalType(item.type)}</span></td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span>${item.confidence}%</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill" style="width: ${item.confidence}%"></div>
+                </div>
+              </div>
+            </td>
+            <td style="color: ${item.indicatorScore > 0 ? 'var(--profit-green)' : item.indicatorScore < 0 ? 'var(--loss-red)' : 'var(--text-secondary)'}">
+              ${item.indicatorScore > 0 ? '+' : ''}${formatNumber(item.indicatorScore)}
+            </td>
+            <td style="color: ${item.microScore > 0 ? 'var(--profit-green)' : item.microScore < 0 ? 'var(--loss-red)' : 'var(--text-secondary)'}">
+              ${item.microScore > 0 ? '+' : ''}${formatNumber(item.microScore)}
+            </td>
+            <td>$${formatPrice(item.price)}</td>
+            <td><span class="price-change ${changeClass}">${item.change >= 0 ? '+' : ''}${item.change.toFixed(2)}%</span></td>
+            <td class="volume-value">$${formatVolume(item.volume)}</td>
+            <td>
+              <div class="indicator-pills">${indPills}</div>
+            </td>
+            <td>
+              <button class="action-btn" onclick="viewDetails('${item.symbol}')">View</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+    
+    // Generate indicator pills
+    function generateIndicatorPills(item) {
+      const pills = [];
+      
+      // Show indicator contribution
+      if (item.indicatorScore > 20) {
+        pills.push(`<span class="indicator-pill bullish">IND +${formatNumber(item.indicatorScore)}</span>`);
+      } else if (item.indicatorScore < -20) {
+        pills.push(`<span class="indicator-pill bearish">IND ${formatNumber(item.indicatorScore)}</span>`);
+      }
+      
+      // Show microstructure contribution
+      if (item.microScore > 5) {
+        pills.push(`<span class="indicator-pill bullish">MICRO +${formatNumber(item.microScore)}</span>`);
+      } else if (item.microScore < -5) {
+        pills.push(`<span class="indicator-pill bearish">MICRO ${formatNumber(item.microScore)}</span>`);
+      }
+      
+      // Show signal count
+      if (item.signalCount > 0) {
+        pills.push(`<span class="indicator-pill">${item.signalCount} signals</span>`);
+      }
+      
+      // Show if has microstructure (live data)
+      if (item.hasMicrostructure) {
+        pills.push(`<span class="indicator-pill" style="background: var(--info-blue); color: #fff;">LIVE</span>`);
+      }
+      
+      return pills.join('') || '<span class="indicator-pill">No signals</span>';
+    }
+    
+    // Update stats
+    function updateStats() {
+      const total = screenerData.length;
+      const buySignals = screenerData.filter(d => d.score > 0).length;
+      const sellSignals = screenerData.filter(d => d.score < 0).length;
+      const neutral = screenerData.filter(d => d.score === 0).length;
+      const avgConfidence = total > 0 
+        ? Math.round(screenerData.reduce((sum, d) => sum + (d.confidence || 0), 0) / total)
+        : 0;
+      
+      document.getElementById('statTotalCoins').textContent = total;
+      document.getElementById('statBuySignals').textContent = buySignals;
+      document.getElementById('statSellSignals').textContent = sellSignals;
+      document.getElementById('statNeutral').textContent = neutral;
+      document.getElementById('statAvgConfidence').textContent = avgConfidence + '%';
+    }
+    
+    // Format helpers
+    function formatSignalType(type) {
+      return (type || 'NEUTRAL').replace(/_/g, ' ');
+    }
+    
+    function formatNumber(num) {
+      if (num === null || num === undefined || isNaN(num)) return '0';
+      return parseFloat(num.toFixed(1));
+    }
+    
+    function formatPrice(price) {
+      if (!price) return '0.00';
+      if (price < 0.01) return price.toFixed(6);
+      if (price < 1) return price.toFixed(4);
+      if (price < 100) return price.toFixed(2);
+      return price.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    }
+    
+    function formatVolume(vol) {
+      if (!vol) return '0';
+      if (vol >= 1e9) return (vol / 1e9).toFixed(2) + 'B';
+      if (vol >= 1e6) return (vol / 1e6).toFixed(2) + 'M';
+      if (vol >= 1e3) return (vol / 1e3).toFixed(2) + 'K';
+      return vol.toFixed(2);
+    }
+    
+    // View details - redirect to main dashboard with symbol selected
+    function viewDetails(symbol) {
+      window.location.href = `/?symbol=${symbol}`;
+    }
+    
+    // Show error state
+    function showError() {
+      screenerBody.innerHTML = `
+        <tr>
+          <td colspan="11">
+            <div class="empty-state">
+              <div class="empty-state-icon">⚠️</div>
+              <div>Failed to load screener data</div>
+              <button class="btn" onclick="fetchScreenerData()" style="margin-top: 16px">Retry</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+    
+    // Sort handlers
+    document.querySelectorAll('.screener-table th[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const field = th.dataset.sort;
+        
+        // Toggle direction if same field
+        if (sortField === field) {
+          sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortField = field;
+          sortDirection = 'desc';
+        }
+        
+        // Update UI
+        document.querySelectorAll('.screener-table th').forEach(h => {
+          h.classList.remove('sorted');
+          const icon = h.querySelector('.sort-icon');
+          if (icon) icon.textContent = '↕';
+        });
+        
+        th.classList.add('sorted');
+        th.querySelector('.sort-icon').textContent = sortDirection === 'asc' ? '↑' : '↓';
+        
+        renderScreener();
+      });
+    });
+    
+    // Filter handlers
+    minScoreInput.addEventListener('change', renderScreener);
+    signalFilter.addEventListener('change', renderScreener);
+    refreshBtn.addEventListener('click', fetchScreenerData);
+    
+    // Auto-refresh every 30 seconds
+    setInterval(fetchScreenerData, 30000);
+    
+    // Initial load
+    if (document.readyState === 'complete') {
+      fetchScreenerData();
+    } else {
+      window.addEventListener('load', fetchScreenerData);
+    }
+  </script>
+</body>
+</html>

@@ -285,13 +285,49 @@ class TradingServer {
     };
   }
 
+  /**
+   * Get signal summary for a specific symbol
+   * Shared helper used by /api/signals and /api/screener/scan
+   * @param {string} symbol - The trading symbol
+   * @returns {Object|null} Signal summary or null if symbol not tracked
+   */
+  _getSignalSummaryForSymbol(symbol) {
+    const suite = this.indicators.get(symbol);
+    const micro = this.microstructure.get(symbol);
+    
+    if (!suite) {
+      return null;
+    }
+    
+    const indicatorResults = {};
+    for (const [name, ind] of Object.entries(suite)) {
+      if (typeof ind.getResult === 'function') {
+        indicatorResults[name] = ind.getResult();
+      }
+    }
+    
+    const microResults = {
+      buySellRatio: micro?.buySellRatio?.getResult(),
+      priceRatio: micro?.priceRatio?.getResult(),
+      fundingRate: micro?.fundingRate?.getResult()
+    };
+    
+    const signal = this.signalGenerator.generate(indicatorResults, microResults);
+    return this.signalGenerator.getSummary(signal);
+  }
+
   _setupRoutes() {
     this.app.use(express.json());
     this.app.use(express.static(path.join(__dirname, 'public')));
     
     // Dashboard
     this.app.get('/', (req, res) => {
-      res.sendFile(path.join(__dirname, 'index.html'));
+      res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    });
+    
+    // Screener Dashboard
+    this.app.get('/screener', (req, res) => {
+      res.sendFile(path.join(__dirname, 'public', 'screener.html'));
     });
     
     // API: Status
@@ -312,27 +348,13 @@ class TradingServer {
     this.app.get('/api/signals', (req, res) => {
       const signals = [];
       for (const symbol of this.indicators.keys()) {
-        const suite = this.indicators.get(symbol);
-        const micro = this.microstructure.get(symbol);
-        
-        const indicatorResults = {};
-        for (const [name, ind] of Object.entries(suite)) {
-          if (typeof ind.getResult === 'function') {
-            indicatorResults[name] = ind.getResult();
-          }
+        const signalSummary = this._getSignalSummaryForSymbol(symbol);
+        if (signalSummary) {
+          signals.push({
+            symbol,
+            ...signalSummary
+          });
         }
-        
-        const microResults = {
-          buySellRatio: micro?.buySellRatio.getResult(),
-          priceRatio: micro?.priceRatio.getResult(),
-          fundingRate: micro?.fundingRate.getResult()
-        };
-        
-        const signal = this.signalGenerator.generate(indicatorResults, microResults);
-        signals.push({
-          symbol,
-          ...this.signalGenerator.getSummary(signal)
-        });
       }
       
       res.json(signals.sort((a, b) => Math.abs(b.score) - Math.abs(a.score)));
@@ -369,7 +391,63 @@ class TradingServer {
     
     // API: Coin list
     this.app.get('/api/coins', (req, res) => {
-      res.json(this.coinList.getTopCoins(20));
+      const limit = parseInt(req.query.limit) || 50;
+      res.json(this.coinList.getTopCoins(limit));
+    });
+    
+    /**
+     * API: Screener Scan - Full scan of top coins.
+     *
+     * Note:
+     * - The current screener UI (screener.html) still uses /api/signals and /api/coins
+     *   and performs filtering client-side.
+     * - This endpoint centralizes screener logic on the server and is intended for
+     *   programmatic use (e.g. external tools, future dashboard revisions, or other
+     *   services) even if the existing frontend does not yet call it directly.
+     *
+     * Do not remove this endpoint as "dead code" without first verifying external
+     * consumers and planned dashboard integrations.
+     */
+    this.app.get('/api/screener/scan', async (req, res) => {
+      try {
+        const limit = parseInt(req.query.limit) || 50;
+        const minScore = parseInt(req.query.minScore) || 0;
+        
+        const coins = this.coinList.getTopCoins(limit);
+        const results = [];
+        
+        for (const coin of coins) {
+          // Use shared helper for signal generation
+          const signal = this._getSignalSummaryForSymbol(coin.symbol) || 
+            { score: 0, type: 'NEUTRAL', confidence: 0, indicatorScore: 0, microstructureScore: 0 };
+          
+          // Apply min score filter
+          if (Math.abs(signal.score) >= minScore) {
+            results.push({
+              symbol: coin.symbol,
+              baseCurrency: coin.baseCurrency,
+              price: coin.lastPrice,
+              change: coin.priceChangePercent,
+              volume: coin.turnover24h,
+              spread: coin.spread,
+              fundingRate: coin.fundingRate,
+              openInterest: coin.openInterest,
+              ...signal
+            });
+          }
+        }
+        
+        // Sort by absolute score
+        results.sort((a, b) => Math.abs(b.score) - Math.abs(a.score));
+        
+        res.json({
+          timestamp: Date.now(),
+          count: results.length,
+          coins: results
+        });
+      } catch (err) {
+        res.status(500).json({ error: err.message });
+      }
     });
     
     // API: Backtest

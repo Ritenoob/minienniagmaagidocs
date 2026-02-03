@@ -286,6 +286,11 @@ class DemoServer {
       res.sendFile(path.join(__dirname, 'public', 'index.html'));
     });
     
+    // Screener Dashboard
+    this.app.get('/screener', (req, res) => {
+      res.sendFile(path.join(__dirname, 'public', 'screener.html'));
+    });
+    
     this.app.get('/api/status', (req, res) => {
       res.json({
         mode: 'demo',
@@ -342,12 +347,23 @@ class DemoServer {
     });
     
     this.app.get('/api/coins', (req, res) => {
-      res.json(CONFIG.symbols.map((s, i) => ({
-        symbol: s,
-        rank: i + 1,
-        price: this.prices[s],
-        volume24h: 100000000 + Math.random() * 500000000
-      })));
+      // Generate demo coin data with more fields for the screener
+      const demoCoins = CONFIG.symbols.map((s, i) => {
+        const price = this.prices[s];
+        return {
+          symbol: s,
+          baseCurrency: s.replace('USDTM', ''),
+          rank: i + 1,
+          lastPrice: price,
+          priceChangePercent: (Math.random() - 0.5) * 10,
+          turnover24h: 100000000 + Math.random() * 500000000,
+          volume24h: (100000000 + Math.random() * 500000000) / price,
+          spread: Math.random() * 0.02,
+          fundingRate: (Math.random() - 0.5) * 0.02,
+          openInterest: 10000000 + Math.random() * 50000000
+        };
+      });
+      res.json(demoCoins);
     });
     
     // Backtest endpoint with generated data
