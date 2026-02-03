@@ -8,6 +8,30 @@
 
 ---
 
+## 📥 Download Files
+
+Download the complete repository or individual documentation files:
+
+### Download Entire Repository
+[![Download ZIP](https://img.shields.io/badge/Download-ZIP-blue?style=for-the-badge&logo=github)](https://github.com/Ritenoob/minienniagmaagidocs/archive/refs/heads/main.zip)
+
+### Download Individual Files
+
+| File | Description | Download |
+|------|-------------|----------|
+| AGIREADME.md | ⭐ Main Specification (228KB) | [📥 Download](https://raw.githubusercontent.com/Ritenoob/minienniagmaagidocs/main/AGIREADME.md) |
+| STRATEGY_CONFIG.json | Indicator Weights Configuration | [📥 Download](https://raw.githubusercontent.com/Ritenoob/minienniagmaagidocs/main/STRATEGY_CONFIG.json) |
+| CORRECTED_ENV_CONFIG.env | Environment Setup | [📥 Download](https://raw.githubusercontent.com/Ritenoob/minienniagmaagidocs/main/CORRECTED_ENV_CONFIG.env) |
+| MINIATURE_ENIGMA_V6_ARCHITECTURE.md | System Architecture | [📥 Download](https://raw.githubusercontent.com/Ritenoob/minienniagmaagidocs/main/MINIATURE_ENIGMA_V6_ARCHITECTURE.md) |
+| MINIATURE_ENIGMA_TECH_REFERENCE.md | Technical Reference | [📥 Download](https://raw.githubusercontent.com/Ritenoob/minienniagmaagidocs/main/MINIATURE_ENIGMA_TECH_REFERENCE.md) |
+| coinscreener.md | Coin Screener Specification | [📥 Download](https://raw.githubusercontent.com/Ritenoob/minienniagmaagidocs/main/coinscreener.md) |
+| DELIVERY_SUMMARY.md | Delivery Summary | [📥 Download](https://raw.githubusercontent.com/Ritenoob/minienniagmaagidocs/main/DELIVERY_SUMMARY.md) |
+| react-trading-dashboard.tsx | React Dashboard Component | [📥 Download](https://raw.githubusercontent.com/Ritenoob/minienniagmaagidocs/main/react-trading-dashboard.tsx) |
+
+> **Tip:** Right-click on any download link and select "Save link as..." to download the file directly.
+
+---
+
 ## 📋 Overview
 
 **Miniature Enigma** is an enterprise-grade cryptocurrency trading bot designed for **KuCoin Futures perpetual contracts**. It combines sophisticated technical analysis, machine learning signal generation, and comprehensive risk management.
