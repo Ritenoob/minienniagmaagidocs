@@ -280,7 +280,12 @@ class TradingServer {
     
     // Dashboard
     this.app.get('/', (req, res) => {
-      res.sendFile(path.join(__dirname, 'index.html'));
+      res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    });
+    
+    // Screener Dashboard
+    this.app.get('/screener', (req, res) => {
+      res.sendFile(path.join(__dirname, 'public', 'screener.html'));
     });
     
     // API: Status
@@ -358,7 +363,71 @@ class TradingServer {
     
     // API: Coin list
     this.app.get('/api/coins', (req, res) => {
-      res.json(this.coinList.getTopCoins(20));
+      const limit = parseInt(req.query.limit) || 50;
+      res.json(this.coinList.getTopCoins(limit));
+    });
+    
+    // API: Screener Scan - Full scan of top coins
+    this.app.get('/api/screener/scan', async (req, res) => {
+      try {
+        const limit = parseInt(req.query.limit) || 50;
+        const minScore = parseInt(req.query.minScore) || 0;
+        
+        const coins = this.coinList.getTopCoins(limit);
+        const results = [];
+        
+        for (const coin of coins) {
+          // Check if we have indicators for this coin
+          const suite = this.indicators.get(coin.symbol);
+          const micro = this.microstructure.get(coin.symbol);
+          
+          let signal = { score: 0, type: 'NEUTRAL', confidence: 0, indicatorScore: 0, microstructureScore: 0 };
+          
+          if (suite) {
+            const indicatorResults = {};
+            for (const [name, ind] of Object.entries(suite)) {
+              if (typeof ind.getResult === 'function') {
+                indicatorResults[name] = ind.getResult();
+              }
+            }
+            
+            const microResults = {
+              buySellRatio: micro?.buySellRatio?.getResult(),
+              priceRatio: micro?.priceRatio?.getResult(),
+              fundingRate: micro?.fundingRate?.getResult()
+            };
+            
+            const generatedSignal = this.signalGenerator.generate(indicatorResults, microResults);
+            signal = this.signalGenerator.getSummary(generatedSignal);
+          }
+          
+          // Apply min score filter
+          if (Math.abs(signal.score) >= minScore) {
+            results.push({
+              symbol: coin.symbol,
+              baseCurrency: coin.baseCurrency,
+              price: coin.lastPrice,
+              change: coin.priceChangePercent,
+              volume: coin.turnover24h,
+              spread: coin.spread,
+              fundingRate: coin.fundingRate,
+              openInterest: coin.openInterest,
+              ...signal
+            });
+          }
+        }
+        
+        // Sort by absolute score
+        results.sort((a, b) => Math.abs(b.score) - Math.abs(a.score));
+        
+        res.json({
+          timestamp: Date.now(),
+          count: results.length,
+          coins: results
+        });
+      } catch (err) {
+        res.status(500).json({ error: err.message });
+      }
     });
     
     // API: Backtest
