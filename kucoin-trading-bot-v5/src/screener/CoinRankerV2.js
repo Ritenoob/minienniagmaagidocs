@@ -13,8 +13,6 @@
  * @module CoinRankerV2
  */
 
-const Decimal = require('decimal.js');
-
 class CoinRankerV2 {
   /**
    * @param {Object} config
