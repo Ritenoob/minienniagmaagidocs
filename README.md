@@ -8,6 +8,21 @@
 
 ---
 
+## 📥 Download
+
+### Option 1: Clone with Git (Recommended)
+```bash
+git clone https://github.com/Ritenoob/minienniagmaagidocs.git
+cd minienniagmaagidocs
+```
+
+### Option 2: Download as ZIP
+[⬇️ Download ZIP](https://github.com/Ritenoob/minienniagmaagidocs/archive/refs/heads/main.zip)
+
+Or click the green **"Code"** button on the repository page and select **"Download ZIP"**.
+
+---
+
 ## 📋 Overview
 
 **Miniature Enigma** is an enterprise-grade cryptocurrency trading bot designed for **KuCoin Futures perpetual contracts**. It combines sophisticated technical analysis, machine learning signal generation, and comprehensive risk management.
