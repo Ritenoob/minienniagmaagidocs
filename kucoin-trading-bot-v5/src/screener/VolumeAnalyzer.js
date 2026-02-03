@@ -13,8 +13,6 @@
  * @module VolumeAnalyzer
  */
 
-const Decimal = require('decimal.js');
-
 class VolumeAnalyzer {
   /**
    * @param {Object} config
@@ -169,7 +167,12 @@ class VolumeAnalyzer {
       sumX2 += i * i;
     }
     
-    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const denominator = n * sumX2 - sumX * sumX;
+    
+    // Safeguard against division by zero
+    if (denominator === 0) return 0;
+    
+    const slope = (n * sumXY - sumX * sumY) / denominator;
     
     // Normalize to percentage of average
     const avg = sumY / n;

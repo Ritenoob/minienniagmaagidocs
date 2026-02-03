@@ -45,6 +45,12 @@ class CoinRankerV2 {
       buySellImbalance: config.weights?.buySellImbalance || 0.20
     };
     
+    // Volatility scoring parameters
+    // Optimal daily volatility percentage for trading (default 3.5%)
+    this.optimalVolatility = config.optimalVolatility || 3.5;
+    // Penalty multiplier for deviation from optimal (higher = steeper penalty)
+    this.volatilityPenaltyRate = config.volatilityPenaltyRate || 20;
+    
     this.topN = config.topN || 50;
     this.refreshInterval = config.refreshInterval || 60 * 60 * 1000;
     
@@ -165,13 +171,11 @@ class CoinRankerV2 {
     
     // Calculate min/max for normalization
     const volumes = this.coins.map(c => c.turnover24h);
-    const volatilities = this.coins.map(c => c.priceChangePercent);
     const spreads = this.coins.map(c => c.spread);
     const fundings = this.coins.map(c => Math.abs(c.fundingRate));
     const imbalances = this.coins.map(c => Math.abs(c.buySellRatio - 1));
     
     const maxVolume = Math.max(...volumes);
-    const maxVolatility = Math.max(...volatilities);
     const minSpread = Math.min(...spreads);
     const maxSpread = Math.max(...spreads);
     const maxFunding = Math.max(...fundings);
@@ -184,15 +188,17 @@ class CoinRankerV2 {
         : 0;
       
       // Volatility score (moderate volatility preferred)
-      // Optimal range: 2-5% daily change
-      const optimalVol = 3.5;
-      const volDiff = Math.abs(coin.priceChangePercent - optimalVol);
-      coin.volatilityScore = Math.max(0, 100 - volDiff * 20);
+      // Uses configurable optimal volatility and penalty rate
+      const volDiff = Math.abs(coin.priceChangePercent - this.optimalVolatility);
+      coin.volatilityScore = Math.max(0, 100 - volDiff * this.volatilityPenaltyRate);
       
       // Spread score (lower is better)
-      coin.spreadScore = maxSpread > minSpread
-        ? ((maxSpread - coin.spread) / (maxSpread - minSpread)) * 100
-        : 100;
+      // If all coins have the same spread, give them all perfect score
+      if (maxSpread === minSpread) {
+        coin.spreadScore = 100;
+      } else {
+        coin.spreadScore = ((maxSpread - coin.spread) / (maxSpread - minSpread)) * 100;
+      }
       
       // Funding score (neutral preferred)
       coin.fundingScore = maxFunding > 0

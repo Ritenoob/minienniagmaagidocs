@@ -13,8 +13,6 @@
  * @module VolatilityFilter
  */
 
-const Decimal = require('decimal.js');
-
 class VolatilityFilter {
   /**
    * @param {Object} config
@@ -54,7 +52,6 @@ class VolatilityFilter {
     }
     
     const history = this.candleHistory.get(symbol);
-    
     // Get previous close
     const prevClose = history.length > 0 
       ? history[history.length - 1].close 
@@ -169,7 +166,7 @@ class VolatilityFilter {
       const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
       const squaredDiffs = returns.map(r => Math.pow(r - avgReturn, 2));
       const variance = squaredDiffs.reduce((a, b) => a + b, 0) / returns.length;
-      historicalVol = Math.sqrt(variance) * Math.sqrt(252) * 100; // Annualized
+      historicalVol = Math.sqrt(variance) * Math.sqrt(365) * 100; // Annualized for 24/7 crypto markets
     }
     
     // Volatility regime
@@ -227,7 +224,12 @@ class VolatilityFilter {
       sumX2 += i * i;
     }
     
-    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const denominator = n * sumX2 - sumX * sumX;
+    
+    // Safeguard against division by zero
+    if (denominator === 0) return 0;
+    
+    const slope = (n * sumXY - sumX * sumY) / denominator;
     const avg = sumY / n;
     
     return avg > 0 ? (slope / avg) * 100 : 0;

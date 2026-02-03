@@ -45,6 +45,12 @@ async function initializeScreenerSuite(suite) {
 
 /**
  * Update screener suite with new candle data
+ * 
+ * Note: coinRanker is NOT updated here because it operates on a timer-based
+ * refresh cycle (hourly by default) to fetch contract data from the API,
+ * rather than processing individual candles. For real-time buy:sell ratio
+ * updates, use coinRanker.updateBuySellRatio(symbol, ratio) directly.
+ * 
  * @param {Object} suite - Screener suite
  * @param {string} symbol - Trading symbol
  * @param {Object} candle - Candle data
