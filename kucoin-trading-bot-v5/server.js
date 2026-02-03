@@ -367,7 +367,19 @@ class TradingServer {
       res.json(this.coinList.getTopCoins(limit));
     });
     
-    // API: Screener Scan - Full scan of top coins
+    /**
+     * API: Screener Scan - Full scan of top coins.
+     *
+     * Note:
+     * - The current screener UI (screener.html) still uses /api/signals and /api/coins
+     *   and performs filtering client-side.
+     * - This endpoint centralizes screener logic on the server and is intended for
+     *   programmatic use (e.g. external tools, future dashboard revisions, or other
+     *   services) even if the existing frontend does not yet call it directly.
+     *
+     * Do not remove this endpoint as "dead code" without first verifying external
+     * consumers and planned dashboard integrations.
+     */
     this.app.get('/api/screener/scan', async (req, res) => {
       try {
         const limit = parseInt(req.query.limit) || 50;
