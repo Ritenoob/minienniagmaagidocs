@@ -54,7 +54,6 @@ class VolatilityFilter {
     }
     
     const history = this.candleHistory.get(symbol);
-    const atrHist = this.atrHistory.get(symbol);
     
     // Get previous close
     const prevClose = history.length > 0 
