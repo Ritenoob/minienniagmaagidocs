@@ -1,0 +1,107 @@
+# KuCoin Futures Trading Bot - Docker Compose
+# Orchestrates bot, database, and cache services
+
+services:
+  # Trading Bot
+  bot:
+    build: .
+    container_name: kucoin-trading-bot
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MODE=${MODE:-paper}
+      - PORT=3000
+      - KUCOIN_API_KEY=${KUCOIN_API_KEY:-}
+      - KUCOIN_API_SECRET=${KUCOIN_API_SECRET:-}
+      - KUCOIN_PASSPHRASE=${KUCOIN_PASSPHRASE:-}
+      - SYMBOLS=${SYMBOLS:-auto}
+      - LEVERAGE=${LEVERAGE:-5}
+      - RISK_PERCENT=${RISK_PERCENT:-2}
+      - SIGNAL_THRESHOLD=${SIGNAL_THRESHOLD:-50}
+      - PAPER_BALANCE=${PAPER_BALANCE:-10000}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-bot}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-trading}
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/status', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - trading-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: trading-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-bot}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_DB=${POSTGRES_DB:-trading}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bot} -d ${POSTGRES_DB:-trading}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - trading-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: trading-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - trading-network
+
+  # TimescaleDB (for OHLCV time-series data)
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: trading-timescaledb
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${TIMESCALE_USER:-timescale}
+      - POSTGRES_PASSWORD=${TIMESCALE_PASSWORD:-changeme}
+      - POSTGRES_DB=${TIMESCALE_DB:-market_data}
+    volumes:
+      - timescale-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TIMESCALE_USER:-timescale} -d ${TIMESCALE_DB:-market_data}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - trading-network
+
+volumes:
+  postgres-data:
+  redis-data:
+  timescale-data:
+
+networks:
+  trading-network:
+    driver: bridge

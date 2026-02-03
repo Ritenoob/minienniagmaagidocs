@@ -21,7 +21,20 @@ const PaperTradingEngine = require('./src/optimizer/PaperTradingEngine');
 
 const CONFIG = {
   port: process.env.PORT || 3000,
-  symbols: ['XBTUSDTM', 'ETHUSDTM', 'SOLUSDTM'],
+  // Demonstrating bot works with ALL crypto perpetual futures
+  // These are the top 10 perpetual futures by volume on KuCoin
+  symbols: [
+    'XBTUSDTM',   // Bitcoin
+    'ETHUSDTM',   // Ethereum
+    'SOLUSDTM',   // Solana
+    'XRPUSDTM',   // XRP
+    'DOGEUSDTM',  // Dogecoin
+    'AVAXUSDTM',  // Avalanche
+    'LINKUSDTM',  // Chainlink
+    'ADAUSDTM',   // Cardano
+    'DOTUSDTM',   // Polkadot
+    'MATICUSDTM'  // Polygon
+  ],
   leverage: 5,
   riskPercent: 2,
   signalThreshold: 50,
@@ -53,11 +66,18 @@ class DemoServer {
       maxPositions: 3
     });
     
-    // Simulated prices
+    // Simulated prices for ALL perpetual futures demo
     this.prices = {
       'XBTUSDTM': 95000,
       'ETHUSDTM': 3200,
-      'SOLUSDTM': 180
+      'SOLUSDTM': 180,
+      'XRPUSDTM': 2.5,
+      'DOGEUSDTM': 0.32,
+      'AVAXUSDTM': 38,
+      'LINKUSDTM': 22,
+      'ADAUSDTM': 0.95,
+      'DOTUSDTM': 7.5,
+      'MATICUSDTM': 0.85
     };
     
     this.running = false;

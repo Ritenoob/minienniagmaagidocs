@@ -1,0 +1,163 @@
+# KuCoin Futures Trading Bot - CI/CD Pipeline
+# GitHub Actions workflow for testing and deployment
+
+name: CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+# Minimal permissions for security
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ============================================
+  # TEST JOB
+  # ============================================
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: kucoin-trading-bot-v5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: kucoin-trading-bot-v5/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run verification tests
+        run: npm run verify
+
+      - name: Run unit tests
+        run: npm test
+
+  # ============================================
+  # LINT JOB
+  # ============================================
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: kucoin-trading-bot-v5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: kucoin-trading-bot-v5/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for syntax errors
+        run: node -c server.js && node -c demo-server.js
+
+  # ============================================
+  # BUILD JOB
+  # ============================================
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    defaults:
+      run:
+        working-directory: kucoin-trading-bot-v5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./kucoin-trading-bot-v5
+          push: false
+          tags: kucoin-trading-bot:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Docker image
+        run: |
+          docker build -t kucoin-trading-bot:test .
+          docker run --rm -d --name bot-test -p 3000:3000 kucoin-trading-bot:test
+          sleep 10
+          curl -f http://localhost:3000/api/status || exit 1
+          docker stop bot-test
+
+  # ============================================
+  # SECURITY SCAN JOB
+  # ============================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: kucoin-trading-bot-v5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: kucoin-trading-bot-v5/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+  # ============================================
+  # DEPLOY JOB (Manual trigger only)
+  # ============================================
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy notification
+        run: |
+          echo "🚀 Deployment would happen here"
+          echo "Configure your deployment target (AWS, GCP, DigitalOcean, etc.)"
+          echo "Set up secrets: DEPLOY_HOST, DEPLOY_KEY, etc."

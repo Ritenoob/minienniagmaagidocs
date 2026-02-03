@@ -8,7 +8,10 @@
 
 const screenerConfig = {
   // Symbols to screen (can be overridden at runtime)
-  symbols: ['XBTUSDTM', 'ETHUSDTM'],
+  // Set to empty array [] or 'auto' to dynamically discover ALL perpetual futures
+  // The CoinListManager will filter top coins by volume, spread, and liquidity
+  symbols: [],  // Empty array = auto-discover all perpetual futures
+  autoDiscovery: true,  // Enable automatic perpetual futures discovery
   
   // Timeframes
   primaryTimeframe: '5min',

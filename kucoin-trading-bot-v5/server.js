@@ -38,7 +38,13 @@ const CONFIG = {
   passphrase: process.env.KUCOIN_PASSPHRASE || '',
   
   // Trading parameters
-  symbols: (process.env.SYMBOLS || 'XBTUSDTM,ETHUSDTM').split(','),
+  // Set to 'auto' or leave empty to dynamically discover ALL perpetual futures
+  symbols: (() => {
+    const envSymbols = process.env.SYMBOLS;
+    if (!envSymbols || envSymbols === 'auto') return [];
+    return envSymbols.split(',').filter(s => s.trim());
+  })(),
+  useAutoDiscovery: !process.env.SYMBOLS || process.env.SYMBOLS === 'auto',
   primaryTimeframe: process.env.PRIMARY_TF || '5min',
   secondaryTimeframe: process.env.SECONDARY_TF || '15min',
   
@@ -107,15 +113,20 @@ class TradingServer {
   async initialize() {
     console.log(`[Server] Initializing in ${CONFIG.mode} mode...`);
     
-    // Initialize coin list
+    // Initialize coin list to discover ALL perpetual futures contracts
     await this.coinList.initialize();
     
-    // Use configured symbols or top coins
-    const symbols = CONFIG.symbols.length > 0 && CONFIG.symbols[0] 
-      ? CONFIG.symbols 
-      : this.coinList.getSymbols().slice(0, 10);
-    
-    console.log(`[Server] Tracking symbols: ${symbols.join(', ')}`);
+    // Use configured symbols or dynamically discover top perpetual futures
+    let symbols;
+    if (CONFIG.useAutoDiscovery || CONFIG.symbols.length === 0) {
+      // Auto-discover ALL perpetual futures, ranked by volume and filtered by liquidity
+      symbols = this.coinList.getSymbols().slice(0, 10);
+      console.log(`[Server] Auto-discovered ${this.coinList.getSymbols().length} perpetual futures contracts`);
+      console.log(`[Server] Tracking top ${symbols.length} by volume: ${symbols.join(', ')}`);
+    } else {
+      symbols = CONFIG.symbols;
+      console.log(`[Server] Using configured symbols: ${symbols.join(', ')}`);
+    }
     
     // Initialize per-symbol state
     for (const symbol of symbols) {
