@@ -1,16 +1,17 @@
 # KuCoin Futures Trading Bot
 
-Production-grade automated trading system for KuCoin Futures with 11 technical indicators, 3 microstructure analyzers, and comprehensive risk management.
+Production-grade automated trading system for **ALL KuCoin Futures perpetual contracts** with 11 technical indicators, 3 microstructure analyzers, and comprehensive risk management.
 
-## Features
+## Key Features
 
+- **All Perpetual Futures Support**: Automatically discovers and trades ALL USDT perpetual futures on KuCoin
+- **Dynamic Coin Screening**: Auto-ranks coins by volume, volatility, and spread to find the best opportunities
 - **11 Technical Indicators**: RSI, MACD, Williams %R, Awesome Oscillator, Stochastic, Bollinger Bands, EMA Trend, KDJ, OBV, DOM, ATR
 - **3 Microstructure Analyzers**: Buy:Sell Ratio, Price Ratio (Bid/Ask/Index/Mark), Funding Rate
 - **Signal Score Range**: -130 to +130 with configurable thresholds
 - **Risk Management**: ROI-based SL/TP, trailing stops, leverage-aware position sizing
 - **Multiple Modes**: Paper trading, backtesting, live trading
 - **Real-time Dashboard**: WebSocket-powered UI with live signal updates
-- **Dynamic Coin Screening**: Auto-ranks coins by volume, volatility, spread
 
 ## Quick Start
 
@@ -105,7 +106,9 @@ KUCOIN_API_SECRET=
 KUCOIN_PASSPHRASE=
 
 # Trading symbols
-SYMBOLS=XBTUSDTM,ETHUSDTM
+# Set to 'auto' to dynamically discover ALL perpetual futures (recommended)
+# Or specify specific symbols: SYMBOLS=XBTUSDTM,ETHUSDTM,SOLUSDTM
+SYMBOLS=auto
 
 # Timeframes
 PRIMARY_TF=5min
